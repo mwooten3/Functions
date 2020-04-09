@@ -36,7 +36,7 @@ class FeatureClass(object):
         self.extension = extension
 
         self.baseName = os.path.basename(self.filePath).strip(extension)     
-        self.inDir = os.path.dirname(self.filePath)
+        self.baseDir = os.path.dirname(self.filePath)
 
         # Set self.driver depending on the extention
         if self.extension == '.gdb':
@@ -50,7 +50,7 @@ class FeatureClass(object):
         self.nFeatures = self.layer.GetFeatureCount()
 
    
-    """ maybe could be redone but the 3dsi nd mask was funky     
+    """ maybe could be generalized but the 3dsi nd mask is funky     
     #--------------------------------------------------------------------------
     # applyNoDataMask()
     #--------------------------------------------------------------------------    
@@ -139,7 +139,7 @@ class FeatureClass(object):
         return copyName  
         
     #--------------------------------------------------------------------------
-    # epsg() [projection] **CHECK THIS!!!**
+    # epsg()
     #--------------------------------------------------------------------------
     def epsg(self):         
 

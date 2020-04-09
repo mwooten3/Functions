@@ -48,28 +48,6 @@ class Raster(object):
         self.nRows = int(self.dataset.RasterYSize)
         self.nLayers = int(self.dataset.RasterCount)
 
-
-    """
-    #--------------------------------------------------------------------------
-    # convertExtent()
-    #--------------------------------------------------------------------------
-    def convertExtent(self, targetEpsg):
-                
-        sourceSrs = osr.SpatialReference()
-        sourceSrs.ImportFromEPSG(int(self.epsg())) 
-    
-        targetSrs = osr.SpatialReference()
-        targetSrs.ImportFromEPSG(int(targetEpsg))
-        
-        (ulx, lry, lrx, uly) = self.extent()
-    
-        coordTrans = osr.CoordinateTransformation(sourceSrs, targetSrs)
-        ulxOut, ulyOut = coordTrans.TransformPoint(ulx, uly)[0:2]
-        lrxOut, lryOut = coordTrans.TransformPoint(lrx, lry)[0:2]
-    
-        return (ulxOut, lryOut, lrxOut, ulyOut)
-    """
-
     #--------------------------------------------------------------------------
     # convertExtent()
     #--------------------------------------------------------------------------
@@ -121,21 +99,6 @@ class Raster(object):
             os.system(cmd)
             
         return outTif
-
-
-    """ moved to init
-    #--------------------------------------------------------------------------
-    # nLayers()
-    #--------------------------------------------------------------------------      
-    def nLayers(self):
-        
-        try:
-            nLayers = self.dataset.RasterCount
-        except:
-            nLayers = None
-            
-        return nLayers
-    """
     
     #--------------------------------------------------------------------------
     # toArray() # Read raster into numpy array
