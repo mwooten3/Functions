@@ -36,7 +36,7 @@ class Raster(object):
         self.extension = extension
          
         self.baseName = os.path.basename(self.filePath).strip(extension)       
-        self.inDir = os.path.dirname(self.filePath)
+        self.baseDir = os.path.dirname(self.filePath)
         
         self.dataset = gdal.Open(self.filePath, gdal.GA_ReadOnly)
         
