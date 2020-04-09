@@ -4,17 +4,14 @@ Created on Tue Mar 24 02:03:17 2020
 @author: mwooten3
 
 FeatureClass describes a polygon .shp or .gdb
-
 """
+
 import os
 import tempfile
 
 from osgeo import ogr
-#from osgeo.osr import CoordinateTransformation
 
 from SpatialHelper import SpatialHelper
-
-from rasterstats import zonal_stats
 
 #------------------------------------------------------------------------------
 # class FeatureClass
@@ -50,52 +47,12 @@ class FeatureClass(object):
         self.nFeatures = self.layer.GetFeatureCount()
 
    
-    """ maybe could be generalized but the 3dsi nd mask is funky     
+    """ maybe could be generalized for FC but the 3dsi nd mask is funky,
+        so, kept in ZFC 
     #--------------------------------------------------------------------------
     # applyNoDataMask()
     #--------------------------------------------------------------------------    
     def applyNoDataMask(self, mask):
-
-        # Expecting mask to be 0 and 1, with 1 where we want to remove data
-        
-        # Get name for output filtered shp:
-        outShp = self.filePath.replace(self.extension, '__filtered-ND.shp')
-        
-        drv = ogr.GetDriverByName("ESRI Shapefile")
-        ds = drv.Open(self.filePath)
-        layer = ds.GetLayer()
-        
-        # Collect list of FIDs to keep
-        keepFIDs = []
-        for feature in layer:
-
-            # Get polygon geometry and export to WKT for ZS 
-            wktPoly = feature.GetGeometryRef().ExportToIsoWkt()
-            
-            # Get info from mask underneath feature
-            z = zonal_stats(wktPoly, mask, stats="mean")
-            out = z[0]['mean']            
-            if out >= 0.6 or out == None: # If 60% of pixels or more are NoData, skip
-                continue
-            
-            # Else, add FID to list to keep
-            keepFIDs.append(feature.GetFID())
-
-        # Filter and write the features we want to keep to new output DS:
-        ## Pass ID's to a SQL query as a tuple, i.e. "(1, 2, 3, ...)"
-        layer.SetAttributeFilter("FID IN {}".format(tuple(keepFIDs)))
-
-        dsOut = drv.CreateDataSource(outShp)
-        layerOutName = os.path.basename(outShp).replace('.shp', '')
-        layerOut = dsOut.CopyLayer(layer, layerOutName)
-        
-        if not layerOut: # If CopyLayer failed for whatever reason
-            print "Could not remove NoData polygons"
-            return self.filePath
-        
-        ds = layer = dsOut = layerOut = feature = None
-        
-        return outShp
     """
     
     #--------------------------------------------------------------------------
@@ -128,6 +85,18 @@ class FeatureClass(object):
         
         return clipFile
 
+    #--------------------------------------------------------------------------
+    # convertExtent()
+    #--------------------------------------------------------------------------
+    def convertExtent(self, targetEpsg):
+        
+        (ulx, lry, lrx, uly) = self.extent()
+
+        ulxOut, ulyOut = SpatialHelper().convertCoords((ulx, uly), self.epsg(), targetEpsg)
+        lrxOut, lryOut = SpatialHelper().convertCoords((lrx, lry), self.epsg(), targetEpsg)
+    
+        return (ulxOut, lryOut, lrxOut, ulyOut)
+    
     #--------------------------------------------------------------------------
     # createCopy()
     #--------------------------------------------------------------------------    
