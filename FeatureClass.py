@@ -58,9 +58,10 @@ class FeatureClass(object):
     """
     
     #--------------------------------------------------------------------------
-    # clipToExtent()
+    # clipToExtent() - must supply the target extent and that extents' epsg
+    #                  projecting output to new EPSG is optional 
     #--------------------------------------------------------------------------    
-    def clipToExtent(self, clipExtent, extentEpsg, outClip = None):
+    def clipToExtent(self, clipExtent, extentEpsg, tEpsg = None, outClip = None):
         
         # Expect extent to be tuple = (xmin, ymin, xmax, ymax)
 
@@ -80,9 +81,13 @@ class FeatureClass(object):
             clipExtent = (ulx, lry, lrx, uly)
         
         extent = ' '.join(map(str,clipExtent))
-    
+
         cmd = 'ogr2ogr -clipsrc {} -spat {} -f '.format(extent, extent) + \
                     '"ESRI Shapefile" {} {}'.format(clipFile, self.filePath)
+                    
+        # Set output projection if targetEpsg is supplied
+        if tEpsg: cmd += ' -t_srs EPSG:{}'.format(tEpsg)
+        
         os.system(cmd)
         
         return clipFile
