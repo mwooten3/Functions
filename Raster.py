@@ -10,7 +10,6 @@ import os
 import tempfile
 
 from osgeo import gdal, osr, gdal_array
-#from osgeo.osr import CoordinateTransformation
 
 from SpatialHelper import SpatialHelper
 
@@ -108,6 +107,7 @@ class Raster(object):
         """ Read data stack into numpy array """
         typeCode = gdal_array.GDALTypeCodeToNumericTypeCode(self.ogrDataType)
         arr = np.zeros((self.nRows, self.nColumns, self.nLayers), typeCode)
+        
         for b in range(self.nLayers): # For each band
             arr[:, :, b] = self.dataset.GetRasterBand(b + 1).ReadAsArray() # GDAL is 1-based while Python is 0-based
             

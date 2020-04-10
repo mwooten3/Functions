@@ -43,7 +43,9 @@ class FeatureClass(object):
         
         self.dataset = self.driver.Open(self.filePath)
         self.layer = self.dataset.GetLayer()
+        self.layerDefn = self.layer.GetLayerDefn()
         
+        self.nFields = self.layerDefn.GetFieldCount()
         self.nFeatures = self.layer.GetFeatureCount()
 
    
@@ -125,4 +127,15 @@ class FeatureClass(object):
         
         return (ulx, lry, lrx, uly)    
 
-
+    #--------------------------------------------------------------------------
+    # fieldNames()
+    #--------------------------------------------------------------------------
+    def fieldNames(self):
+        
+        fields = []
+    
+        for n in range(self.nFields):
+            fieldDefn = self.layerDefn.GetFieldDefn(n)
+            fields.append(fieldDefn.name)
+                
+        return fields
