@@ -25,6 +25,10 @@ class Raster(object):
     #--------------------------------------------------------------------------
     def __init__(self, filePath):
         
+        # Check that the file exists
+        if not os.path.isfile(filePath):
+            raise RuntimeError("Raster {} does not exist".format(filePath))
+        
         # Check that the file is TIF or VRT
         extension = os.path.splitext(filePath)[1]       
         
@@ -88,7 +92,7 @@ class Raster(object):
         if not outTif:
             outTif = '{}.tif'.format(tempfile.mkdtemp())
 
-        if not os.path.exists(outTif):
+        if not os.path.isfile(outTif):
 
             cmd = 'gdal_translate'                      + \
                   ' -b {}'.format(bandN)        + \

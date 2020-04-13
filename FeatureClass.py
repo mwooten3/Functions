@@ -22,7 +22,11 @@ class FeatureClass(object):
     # __init__
     #--------------------------------------------------------------------------
     def __init__(self, filePath):
-        
+
+        # Check that the file exists
+        if not os.path.isfile(filePath):
+            raise RuntimeError("Feature class {} does not exist".format(filePath))
+            
         # Check that the file is SHP or GDB
         extension = os.path.splitext(filePath)[1]       
         
