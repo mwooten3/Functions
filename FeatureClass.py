@@ -23,8 +23,8 @@ class FeatureClass(object):
     #--------------------------------------------------------------------------
     def __init__(self, filePath):
 
-        # Check that the file exists
-        if not os.path.isfile(filePath):
+        # Check that the file exists - must use .exists not .isfile in case FC is GDB
+        if not os.path.exists(filePath):
             raise RuntimeError("Feature class {} does not exist".format(filePath))
             
         # Check that the file is SHP or GDB
