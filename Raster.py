@@ -58,8 +58,10 @@ class Raster(object):
         
         (ulx, lry, lrx, uly) = self.extent()
 
-        ulxOut, ulyOut = SpatialHelper().convertCoords((ulx, uly), self.epsg(), targetEpsg)
-        lrxOut, lryOut = SpatialHelper().convertCoords((lrx, lry), self.epsg(), targetEpsg)
+        ulxOut, ulyOut = SpatialHelper().convertCoords((ulx, uly), 
+                                                       self.epsg(), targetEpsg)
+        lrxOut, lryOut = SpatialHelper().convertCoords((lrx, lry), 
+                                                       self.epsg(), targetEpsg)
     
         return (ulxOut, lryOut, lrxOut, ulyOut)
     
@@ -84,9 +86,9 @@ class Raster(object):
         
         return (ulx, lry, lrx, uly)
 
-    #---------------------------------------------------------------------------
+    #--------------------------------------------------------------------------
     # extractBand()
-    #---------------------------------------------------------------------------
+    #--------------------------------------------------------------------------
     def extractBand(self, bandN, outTif = None):
 
         if not outTif:
@@ -95,7 +97,7 @@ class Raster(object):
         if not os.path.isfile(outTif):
 
             cmd = 'gdal_translate'                      + \
-                  ' -b {}'.format(bandN)        + \
+                  ' -b {}'.format(bandN)                + \
                   ' ' + self.filePath                   + \
                   ' ' + outTif
 
@@ -113,7 +115,8 @@ class Raster(object):
         arr = np.zeros((self.nRows, self.nColumns, self.nLayers), typeCode)
         
         for b in range(self.nLayers): # For each band
-            arr[:, :, b] = self.dataset.GetRasterBand(b + 1).ReadAsArray() # GDAL is 1-based while Python is 0-based
+            
+            arr[:, :, b] = self.dataset.GetRasterBand(b + 1).ReadAsArray() 
             
         return arr  
         
