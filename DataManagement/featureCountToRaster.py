@@ -16,13 +16,19 @@ Process:
 NOTES!: - This will count scenes within a strip that overlap one another twice.
           In order to count by strip, the input .shp should have those features
           merged into one before running through script
-           Example: Create a sensor_spectype_catID field, Dissolve based on that
+           Example: 
+               1. Create dateStr field = !SCENE_ID!.split('_')[1][0:8]
+               2. Create a stripName (sensor_dateStr_spectype_catID) field =
+                   '{}_{}_{}_{}'.format( !SENSOR!, !dateStr!, !PROD_CODE!, !CATALOG_ID!)
+               3. Dissolve based on stripName
            DO THIS BEFORE adding "one" column
         - ALSO: .shp projection unit must match outRes unit i.e. UTM for res in meters
         - AND:  .shp MUST have an int column "one" where every row = 1
     
 Optional (later):
     An optional dictionary argument with fieldname:argument to use in where clause
+    
+5/20: Adding block to provide option for command line inputs
 
 """
 # TO DO: 
@@ -99,26 +105,50 @@ def sumRasters(rastersList, outSumRaster):
     return outSumRaster
 
 
-
+# UNCOMMENT THIS BLOCK TO USE HARDCODED INPUTS
+"""
 #####################################################
 # Process here - VARIABLES:
-outname = 'IK_MS_2005to2010' # for example
+outname = 'WV-2017to2020_Senegal-AOI2' # for example
 
-inputShp = 'E:\\MaggieData\\ProposalStuff\\Senegal_LCLUC\\Shapefiles\\Footprints\\IK_SenegalRiverValley.shp'
+inputShp = 'E:\MaggieData\ProposalStuff\Senegal_LCLUC\Shapefiles\Footprints\WV_strips__SenegalAOI2__UTM.shp'
 outdir =   'E:\\MaggieData\\ProposalStuff\\Senegal_LCLUC\\densityRasters'
 tempdir = os.path.join(outdir, 'temp')
 
 outRes = 50 # in m
 
 """
-searchTerms examples:
-  ['STEREOPAIR:<>:NONE'] # stereo pair not None (if we want stereo)
-  ['FIRST_PROD:=:P1BS', 'FIRST_ster:<>: '] # P1BS, stereo yes # or maybe 'FIRST_ster:<>:NONE'
-  ['FIRST_ac_1:>=:2005', 'FIRST_ac_1:<=:2010', 'FIRST_PROD:=:P1BS', 'FIRST_seas:=:dry']
+#searchTerms examples:
+#   None - no filters, Denity of all features in input shp
+#  ['STEREOPAIR:<>:NONE'] # stereo pair not None (if we want stereo)
+#  ['FIRST_PROD:=:P1BS', 'FIRST_ster:<>: '] # P1BS, stereo yes # or maybe 'FIRST_ster:<>:NONE'
+#  ['FIRST_ac_1:>=:2005', 'FIRST_ac_1:<=:2010', 'FIRST_PROD:=:P1BS', 'FIRST_seas:=:dry']
 """
-searchTerms = ['FIRST_ac_1:>=:2005', 'FIRST_ac_1:<=:2010', 'FIRST_PROD:=:M1BS']
-
+searchTerms = ['FIRST_acq1:>=:2017']#, 'FIRST_acq1:<=:2016']
 #####################################################
+"""
+
+# UNCOMMENT THIS BLOCK TO USE COMMAND LINE INPUTS
+"""
+#####################################################
+outname = #'WV-2017to2020_Senegal-AOI2' # for example
+
+inputShp = 'E:\MaggieData\ProposalStuff\Senegal_LCLUC\Shapefiles\Footprints\WV_strips__SenegalAOI2__UTM.shp'
+outdir =   'E:\\MaggieData\\ProposalStuff\\Senegal_LCLUC\\densityRasters'
+tempdir = os.path.join(outdir, 'temp')
+
+outRes = 50 # in m
+
+"""
+#searchTerms examples:
+#   None - no filters, Denity of all features in input shp
+#  ['STEREOPAIR:<>:NONE'] # stereo pair not None (if we want stereo)
+#  ['FIRST_PROD:=:P1BS', 'FIRST_ster:<>: '] # P1BS, stereo yes # or maybe 'FIRST_ster:<>:NONE'
+#  ['FIRST_ac_1:>=:2005', 'FIRST_ac_1:<=:2010', 'FIRST_PROD:=:P1BS', 'FIRST_seas:=:dry']
+"""
+searchTerms = ['FIRST_acq1:>=:2017']#, 'FIRST_acq1:<=:2016']
+#####################################################
+"""
 
 outSumRaster = os.path.join(outdir, '{}__count.tif'.format(outname))
 print "Creating {}...\n".format(outSumRaster)

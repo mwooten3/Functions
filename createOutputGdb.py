@@ -41,8 +41,8 @@ def main(args):
         
     for inShp in inShps:
         
-        fc = FeatureClass(inShp)
         #zs.updateOutputGdb(outGdb, f)
+        fc = FeatureClass(inShp)
         fc.addToFeatureClass(outputGDB)
 
     """
