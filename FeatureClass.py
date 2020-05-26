@@ -60,6 +60,49 @@ class FeatureClass(object):
     #--------------------------------------------------------------------------    
     def applyNoDataMask(self, mask):
     """
+
+    #--------------------------------------------------------------------------
+    # addToFeatureClass() - Append self to output GDB/GPKG/SHP. If output 
+    #                       already exists, the fields must match
+    #--------------------------------------------------------------------------  
+    def addToFeatureClass(self, outFcPath, outEPSG = 4326):
+
+        # Get driver based off output extension
+        ext = os.path.splitext(outFcPath)[1]   
+        if ext == '.gdb':
+            outDrv = 'FileGDB'
+        elif ext == '.gpkg':
+            outDrv = 'GPKG'
+        elif ext == '.shp':
+            outDrv = 'ESRI Shapefile' #**CHECK THIS**
+        else:
+            print "\nUnrecognized output extension '{}'".format(ext)
+            return None
+                
+        print "\nUpdating/creating {} with {}".format(outFcPath, self.filePath)
+                
+        layerName = os.path.basename(outFcPath).replace(ext, '')
+        cmd = 'ogr2ogr -nln {} -a_srs EPSG:4326 -t_srs EPSG:4326'.format(layerName)
+                
+        if os.path.exists(outFcPath):
+            	
+            # IF IT EXISTS, WE MUST CHECK FIELDS. HOW? DO NOT KNOW IF THIS WILL WORK:
+            outFc = FeatureClass(outFcPath) # (https://stackoverflow.com/questions/52688203/instantiating-a-python-class-from-within-the-same-class-definition)
+            if outFc.fieldNames() != self.fieldNames():
+                
+                stmt = "Field names for output feature class ({}) do not match field names for input ({})".format(outFc.fieldNames(), self.fieldNames())
+                print stmt
+                
+                return None
+            
+            cmd += ' -update -append'
+                    
+        cmd += ' -f "{}" {} {}'.format(outDrv, outFcPath, self.filePath) 
+                
+        print '', cmd
+        os.system(cmd)
+            
+        return None
     
     #--------------------------------------------------------------------------
     # clipToExtent() - must supply the target extent and that extents' epsg
@@ -93,6 +136,9 @@ class FeatureClass(object):
         if tEpsg: cmd += ' -t_srs EPSG:{}'.format(tEpsg)
         
         os.system(cmd)
+        
+        if not os.path.isfile(clipFile):
+            raise RuntimeError('Could not perform clip of input zonal feature class')
         
         return clipFile
 
