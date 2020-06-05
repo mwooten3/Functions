@@ -108,7 +108,8 @@ class FeatureClass(object):
     # clipToExtent() - must supply the target extent and that extents' epsg
     #                  projecting output to new EPSG is optional 
     #--------------------------------------------------------------------------    
-    def clipToExtent(self, clipExtent, extentEpsg, tEpsg = None, outClip = None):
+    def clipToExtent(self, clipExtent, extentEpsg, tEpsg = None, 
+                                         outClip = None, sqlQuery = None):
         
         # Expect extent to be tuple = (xmin, ymin, xmax, ymax)
 
@@ -136,6 +137,10 @@ class FeatureClass(object):
         # Set output projection if targetEpsg is supplied
         if tEpsg: cmd += ' -t_srs EPSG:{}'.format(tEpsg)
         
+        # Set SQL query on src if statement is supplied:
+        import pdb; pdb.set_trace()
+        if sqlQuery: cmd += ' -clipsrcsql {}'.format(sqlQuery)
+        print cmd # for now
         os.system(cmd)
         
         if not os.path.isfile(clipFile):

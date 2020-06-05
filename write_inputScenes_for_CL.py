@@ -7,8 +7,8 @@
 
 
 
-tfile = raw_input("Enter the full path to the input text list: ")
-#C:\\Users\\mwooten3\\Desktop\\del.txt
+#tfile = raw_input("Enter the full path to the input text list: ")
+tfile = r'C:\\Users\\mwooten3\\Desktop\\del.txt'
 
 with open(tfile, 'r') as pl:
     scenes = pl.read().splitlines()
