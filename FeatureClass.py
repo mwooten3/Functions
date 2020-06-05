@@ -138,7 +138,7 @@ class FeatureClass(object):
         if tEpsg: cmd += ' -t_srs EPSG:{}'.format(tEpsg)
         
         # Set SQL query on src if statement is supplied:
-        if sqlQuery: cmd += ' -clipsrcsql {}'.format(sqlQuery)
+        if sqlQuery: cmd += ' -clipsrcsql "{}"'.format(sqlQuery)
         print cmd # for now
         os.system(cmd)
         
