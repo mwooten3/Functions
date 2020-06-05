@@ -29,23 +29,27 @@ Optional (later):
     An optional dictionary argument with fieldname:argument to use in where clause
     
 5/20: Adding block to provide option for command line inputs
+        Order of inputs for CL: siteFootprintsShp searchTerms outputName outputDir
 
+6/2/2020: Moving input arguments to argparse. Can still hardcode parts after unpacking if necessary
 """
-# TO DO: 
-## test with > 1000 features
 
 
-import os, sys
+
+import os#, sys
 import shutil
 import math
 import arcpy
+import argparse
+
 arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
+#from arcpy import sa
 
 # Apply search terms to shapefile --> feature layer
 # Does not support float values
 def applySearchTerms(shp, searchTerms):
-    
+    #import pdb;pdb.set_trace()
     whereClause = ''
     for st in searchTerms:
         
@@ -99,126 +103,137 @@ def getUniqueFIDs(featureLayer):
         
 # Use Arc's sum raster tool to sum rasters
 def sumRasters(rastersList, outSumRaster):
-    
-    arcpy.gp.CellStatistics_sa(";".join(rastersList), outSumRaster, "SUM", "DATA")
 
+    arcpy.gp.CellStatistics_sa(";".join(rastersList), outSumRaster, "SUM", "DATA")
+    #sa.CellStatistics(";".join(rastersList), outSumRaster, "SUM", "DATA")
     return outSumRaster
 
 
-# UNCOMMENT THIS BLOCK TO USE HARDCODED INPUTS
-"""
-#####################################################
-# Process here - VARIABLES:
-outname = 'WV-2017to2020_Senegal-AOI2' # for example
-
-inputShp = 'E:\MaggieData\ProposalStuff\Senegal_LCLUC\Shapefiles\Footprints\WV_strips__SenegalAOI2__UTM.shp'
-outdir =   'E:\\MaggieData\\ProposalStuff\\Senegal_LCLUC\\densityRasters'
-tempdir = os.path.join(outdir, 'temp')
-
-outRes = 50 # in m
-
-"""
-#searchTerms examples:
-#   None - no filters, Denity of all features in input shp
-#  ['STEREOPAIR:<>:NONE'] # stereo pair not None (if we want stereo)
-#  ['FIRST_PROD:=:P1BS', 'FIRST_ster:<>: '] # P1BS, stereo yes # or maybe 'FIRST_ster:<>:NONE'
-#  ['FIRST_ac_1:>=:2005', 'FIRST_ac_1:<=:2010', 'FIRST_PROD:=:P1BS', 'FIRST_seas:=:dry']
-"""
-searchTerms = ['FIRST_acq1:>=:2017']#, 'FIRST_acq1:<=:2016']
-#####################################################
-"""
-
-# UNCOMMENT THIS BLOCK TO USE COMMAND LINE INPUTS
-"""
-#####################################################
-outname = #'WV-2017to2020_Senegal-AOI2' # for example
-
-inputShp = 'E:\MaggieData\ProposalStuff\Senegal_LCLUC\Shapefiles\Footprints\WV_strips__SenegalAOI2__UTM.shp'
-outdir =   'E:\\MaggieData\\ProposalStuff\\Senegal_LCLUC\\densityRasters'
-tempdir = os.path.join(outdir, 'temp')
-
-outRes = 50 # in m
-
-"""
-#searchTerms examples:
-#   None - no filters, Denity of all features in input shp
-#  ['STEREOPAIR:<>:NONE'] # stereo pair not None (if we want stereo)
-#  ['FIRST_PROD:=:P1BS', 'FIRST_ster:<>: '] # P1BS, stereo yes # or maybe 'FIRST_ster:<>:NONE'
-#  ['FIRST_ac_1:>=:2005', 'FIRST_ac_1:<=:2010', 'FIRST_PROD:=:P1BS', 'FIRST_seas:=:dry']
-"""
-searchTerms = ['FIRST_acq1:>=:2017']#, 'FIRST_acq1:<=:2016']
-#####################################################
-"""
-
-outSumRaster = os.path.join(outdir, '{}__count.tif'.format(outname))
-print "Creating {}...\n".format(outSumRaster)
-
-print "Input footprints shp: {}".format(inputShp)
-if searchTerms: print " Filters: {}".format(searchTerms)
-
-maxFeatures = 1000 # there is a 1000 raster limit for sumRasters. must split into iters based off that
-
-for d in [outdir, tempdir]:
-    if not os.path.isdir(d): os.mkdir(d)
-
-# Get the input feature layer: Apply search terms to input shp/gdb if specified
-if searchTerms:
-    inFeatLayer = applySearchTerms(inputShp, searchTerms)
-else:
-    inFeatLayer = arcpy.MakeFeatureLayer_management(inputShp, "features")
-
-nFeatures = int(arcpy.GetCount_management(inFeatLayer).getOutput(0))
-if nFeatures == 0:
-    print '\nThere were 0 features for this input shp/filter combination'
-    sys.exit()
-print "\n Number of features: {}".format(nFeatures)
+def main(args):
     
-if nFeatures > maxFeatures:
-   
-    # For each iteration, featuresToRaster, then sum outputs from FTR
-    FIDs = getUniqueFIDs(inFeatLayer) # get FIDs from feature layer. len should = nFeatures
-    if len(FIDs) != nFeatures: 
-        print "Number of unique FIDs do not match number of features in layer. Please try again"
-        sys.exit()
-        
-    nIterations = int(math.ceil(nFeatures/float(maxFeatures)))
-    print " Number of iterations: {}\n".format(nIterations)
-   
-    a = 0 # initial bounds = (0, maxFeatures)
-    b = maxFeatures
-    iterationRasters = [] # list to store the output sum rasters from each iteration
-    for i in range(0, nIterations):
-        
-        print "  iteration {}...".format(i+1)
+    # Unpack args
+    inputShp    = args['inputStrips']
+    searchTerms = args['searchTerms'] 
+    outname     = args['outputName']
+    outdir      = args['outputDir']
+    outRes      = args['outputRes']
 
-        if i == (nIterations-1):
-            b = nFeatures # if we are in the last iteration, b = end of list
-
-        # Get feature layer for iteration subset - Apply FID bounds to get feature layer
-        whereClause = '("FID" >= {}) AND ("FID" <= {})'.format(FIDs[a], FIDs[b-1])
-        print "   where clause: {}".format(whereClause)
-        iterFeatLayer = arcpy.MakeFeatureLayer_management(inFeatLayer, "features", whereClause)
+    tempdir = os.path.join(outdir, 'temp', outname.split('_')[0])
+    if not os.path.exists(tempdir):
+        os.makedirs(tempdir)
         
-        # Get the count/sum raster for the iteration subset
-        outIterSumRaster = os.path.join(tempdir, '{}-i{}.tif'.format(outname, i))
-        featuresToRaster(iterFeatLayer, tempdir, outRes, outIterSumRaster)
-        iterationRasters.append(outIterSumRaster)
-
-        # get the new bounds for the next iteration by adding maxFeatures 
-        a += maxFeatures
-        b += maxFeatures       
+    # Sometimes, if running stand-alone from CL, we need to convert searchTerms
+    #   from a string (i.e. "[FIRST_SENS:=:WV01]")  to an actual list
+    if isinstance(searchTerms, basestring):
+        import ast
+        searchTerms = ast.literal_eval(searchTerms)        
+        
+    """    
+    #####################################################
+    # If you want to hard-code arguments, do it here:
+    outname = 'del' # for example
     
-    # Lastly, sum all iteration rasters to final output
-    sumRasters(iterationRasters, outSumRaster) # Sum all the iterations
+    inputShp = 'E:\MaggieData\Vietnam_LCLUC\Density\Vietnam_DongThap_AnGiang__ngaStrips.shp'
+    outdir =   'E:\MaggieData\Vietnam_LCLUC\Density'
+    tempdir = os.path.join(outdir, 'temp')
     
-else: # If we are under 1000 features, just run usual
-    featuresToRaster(inFeatLayer, tempdir, outRes, outSumRaster)
+    outRes = 20 # in m
+    
+    #searchTerms examples:
+    #   None - no filters, Denity of all features in input shp
+    #  ['STEREOPAIR:<>:NONE'] # stereo pair not None (if we want stereo)
+    #  ['FIRST_PROD:=:P1BS', 'FIRST_ster:<>: '] # P1BS, stereo yes # or maybe 'FIRST_ster:<>:NONE'
+    #  ['FIRST_ac_1:>=:2005', 'FIRST_ac_1:<=:2010', 'FIRST_PROD:=:P1BS', 'FIRST_seas:=:dry']
+    
+    searchTerms = ['LAST_SENSO: LIKE :WV%']#, 'FIRST_acq1:<=:2016']
+    #####################################################    
+    """
+    
+    outSumRaster = os.path.join(outdir, '{}__count.tif'.format(outname))
+    print "Creating {}...\n".format(outSumRaster)
+    
+    print "Input footprints shp: {}".format(inputShp)
+    if searchTerms: print " Filters: {}".format(searchTerms)
+    
+    maxFeatures = 1000 # there is a 1000 raster limit for sumRasters. must split into iters based off that
+    
+    for d in [outdir, tempdir]:
+        if not os.path.isdir(d): os.mkdir(d)
+    
+    # Get the input feature layer: Apply search terms to input shp/gdb if specified
+    if searchTerms:
+        inFeatLayer = applySearchTerms(inputShp, searchTerms)
+    else:
+        inFeatLayer = arcpy.MakeFeatureLayer_management(inputShp, "features")
+    
+    nFeatures = int(arcpy.GetCount_management(inFeatLayer).getOutput(0))
+    if nFeatures == 0:
+        print '\nThere were 0 features for this input shp/filter combination'
+        return 0
+        #sys.exit()
+    print "\n Number of features: {}".format(nFeatures)
+        
+    if nFeatures > maxFeatures:
+       
+        # For each iteration, featuresToRaster, then sum outputs from FTR
+        FIDs = getUniqueFIDs(inFeatLayer) # get FIDs from feature layer. len should = nFeatures
+        if len(FIDs) != nFeatures: 
+            print "Number of unique FIDs do not match number of features in layer. Please try again"
+            return None
+            #sys.exit()
+            
+        nIterations = int(math.ceil(nFeatures/float(maxFeatures)))
+        print " Number of iterations: {}\n".format(nIterations)
+       
+        a = 0 # initial bounds = (0, maxFeatures)
+        b = maxFeatures
+        iterationRasters = [] # list to store the output sum rasters from each iteration
+        for i in range(0, nIterations):
+            
+            print "  iteration {}...".format(i+1)
+    
+            if i == (nIterations-1):
+                b = nFeatures # if we are in the last iteration, b = end of list
+    
+            # Get feature layer for iteration subset - Apply FID bounds to get feature layer
+            whereClause = '("FID" >= {}) AND ("FID" <= {})'.format(FIDs[a], FIDs[b-1])
+            print "   where clause: {}".format(whereClause)
+            iterFeatLayer = arcpy.MakeFeatureLayer_management(inFeatLayer, "features", whereClause)
+            
+            # Get the count/sum raster for the iteration subset
+            outIterSumRaster = os.path.join(tempdir, '{}-i{}.tif'.format(outname, i))
+            featuresToRaster(iterFeatLayer, tempdir, outRes, outIterSumRaster)
+            iterationRasters.append(outIterSumRaster)
+    
+            # get the new bounds for the next iteration by adding maxFeatures 
+            a += maxFeatures
+            b += maxFeatures       
+        
+        # Lastly, sum all iteration rasters to final output
+        sumRasters(iterationRasters, outSumRaster) # Sum all the iterations
+        
+    else: # If we are under 1000 features, just run usual
+        featuresToRaster(inFeatLayer, tempdir, outRes, outSumRaster)
+    
+    # Clean up:
+    shutil.rmtree(tempdir)    
+    arcpy.CheckInExtension("Spatial")
+    
+    return nFeatures
 
-# Clean up:
-shutil.rmtree(tempdir)    
-arcpy.CheckInExtension("Spatial")
+if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--inputStrips", type=str, required=True, help="Input shp with footprint strips")
+    parser.add_argument("-st", "--searchTerms", type=str, required=False, help="List of search terms")
+    parser.add_argument("-o", "--outputName", type=str, required=True, help="Output name for density maps")
+    parser.add_argument("-od", "--outputDir", type=str, required=True, help="Output dir for density maps")
+    parser.add_argument("-r", "--outputRes", type=int, required=False, help="Output resolution (default = 50m)", default=50)
 
+    
+    args = vars(parser.parse_args())
+
+    main(args)
 
 
 

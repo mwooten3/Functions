@@ -30,7 +30,7 @@ class FeatureClass(object):
         # Check that the file is SHP or GDB
         extension = os.path.splitext(filePath)[1]       
         
-        if extension != '.gdb' and extension != '.shp':
+        if extension != '.gdb' and extension != '.shp' and extension != '.gpkg':
             raise RuntimeError('{} is not a SHP or GDB file'.format(filePath))
 
         self.filePath = filePath
@@ -86,8 +86,8 @@ class FeatureClass(object):
                 
         if os.path.exists(outFcPath):
             	
-            # IF IT EXISTS, WE MUST CHECK FIELDS. HOW? DO NOT KNOW IF THIS WILL WORK:
-            outFc = FeatureClass(outFcPath) # (https://stackoverflow.com/questions/52688203/instantiating-a-python-class-from-within-the-same-class-definition)
+            # If output file exists, confirm that field names are the same
+            outFc = FeatureClass(outFcPath)
             if outFc.fieldNames() != self.fieldNames():
                 
                 stmt = "Field names for output feature class ({}) do not match field names for input ({})".format(outFc.fieldNames(), self.fieldNames())
@@ -129,8 +129,9 @@ class FeatureClass(object):
         
         extent = ' '.join(map(str,clipExtent))
 
-        cmd = 'ogr2ogr -clipsrc {} -spat {} -f '.format(extent, extent) + \
-                    '"ESRI Shapefile" {} {}'.format(clipFile, self.filePath)
+        cmd = 'ogr2ogr -clipsrc {} -spat {} -f '.format(extent, extent) +  \
+                    '"ESRI Shapefile" --config PG_USE_COPY YES '        +  \
+                        '{} {}'.format(clipFile, self.filePath)
                     
         # Set output projection if targetEpsg is supplied
         if tEpsg: cmd += ' -t_srs EPSG:{}'.format(tEpsg)

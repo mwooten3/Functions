@@ -18,9 +18,6 @@ Process:
 #import glob
 import argparse
 
-#import 3DSI_zonalStats as zs #updateOutputGdb
-#zs = __import__('3DSI_zonalStats') # the above does not work because it starts w number
-
 from FeatureClass import FeatureClass
 
 # Set up directories - these are kinda hardcoded according to current set-up in other code
@@ -37,12 +34,14 @@ def main(args):
     # If they do not, FC should throw RuntimeError
     # Can add skip later if we want to avoid error due to shp not existing
     with open (inputList, 'r') as l:
-        inShps = [x.strip('\r\n') for x in l.readlines()]
+        inFcs = [x.strip('\r\n') for x in l.readlines()]
+
+    print "Adding {} feature classes to {}\n".format(len(inFcs), outputGDB)
         
-    for inShp in inShps:
+    for inFc in inFcs:
         
         #zs.updateOutputGdb(outGdb, f)
-        fc = FeatureClass(inShp)
+        fc = FeatureClass(inFc)
         fc.addToFeatureClass(outputGDB)
 
     """
@@ -66,9 +65,9 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
     parser.add_argument("inputList", type=str,
-                                help="Input list or directory")    
+                                help="Text file with list of paths to inputs")    
     parser.add_argument("outGDB", type=str, 
-                                help="Path to outpur GDB")
+                                help="Path to output GDB")
 
 
     args = vars(parser.parse_args())
