@@ -42,8 +42,13 @@ class FeatureClass(object):
         # Set self.driver depending on the extention
         if self.extension == '.gdb':
             self.driver = ogr.GetDriverByName("FileGDB")
+        elif self.extension == '.gpkg': 
+            self.driver = ogr.GetDriverByName("GPKG")
+        elif self.extension == '.shp':
+            self.driver = ogr.GetDriverByName("ESRI Shapefile")
         else:
-            self.driver = ogr.GetDriverByName("ESRI Shapefile")     
+            raise RuntimeError("Could not find driver from {}".format(self.extension))
+            
         
         self.dataset = self.driver.Open(self.filePath)
         self.layer = self.dataset.GetLayer()
@@ -67,7 +72,7 @@ class FeatureClass(object):
     #--------------------------------------------------------------------------  
     def addToFeatureClass(self, outFcPath, outEPSG = 4326):
 
-        # Get driver based off output extension
+        # Get output driver based off output extension
         ext = os.path.splitext(outFcPath)[1]   
         if ext == '.gdb':
             outDrv = 'FileGDB'
