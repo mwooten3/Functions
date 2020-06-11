@@ -70,7 +70,7 @@ class FeatureClass(object):
     # addToFeatureClass() - Append self to output GDB/GPKG/SHP. If output 
     #                       already exists, the fields must match
     #--------------------------------------------------------------------------  
-    def addToFeatureClass(self, outFcPath, outEPSG = 4326):
+    def addToFeatureClass(self, outFcPath, outEPSG = 4326, moreArgs = None):
 
         # Get output driver based off output extension
         ext = os.path.splitext(outFcPath)[1]   
@@ -101,6 +101,9 @@ class FeatureClass(object):
                 return None
             
             cmd += ' -update -append'
+            
+        if moreArgs: # Right now just a string but eventually be list
+            cmd += ' {}'.format(moreArgs)
                     
         cmd += ' -f "{}" {} {}'.format(outDrv, outFcPath, self.filePath) 
                 
