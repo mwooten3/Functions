@@ -122,8 +122,8 @@ def main(args):
     if not os.path.exists(tempdir):
         os.makedirs(tempdir)
         
-    # Sometimes, if running stand-alone from CL, we need to convert searchTerms
-    #   from a string (i.e. "[FIRST_SENS:=:WV01]")  to an actual list
+    # Sometimes, if running stand-alone from CL or another .py, we need to
+    #  convert searchTerms from a string (i.e. "[FIRST_SENS:=:WV01]") to an actual list
     if isinstance(searchTerms, basestring):
         import ast
         searchTerms = ast.literal_eval(searchTerms)        

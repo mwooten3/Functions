@@ -144,7 +144,7 @@ class FeatureClass(object):
         
         # Set SQL query on src if statement is supplied:
         if sqlQuery: cmd += ' -clipsrcsql "{}"'.format(sqlQuery)
-        print cmd # for now
+        print '', cmd # for now
         os.system(cmd)
         
         if not os.path.isfile(clipFile):

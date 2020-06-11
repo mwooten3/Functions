@@ -42,28 +42,44 @@ import featureCountToRaster
 arcpy.env.overwriteOutput = True
 
 # Hardcoded inputs (for now)
-ddir            = r'E:\MaggieData\ProposalStuff\Biodiversity_2020'
-sitesGdb        = os.path.join(ddir, 'Sites\Sites.gdb')
-polygonSites    = os.path.join(sitesGdb, 'Sites_Buffer')
-footprintsFc    = r'E:\MaggieData\NGA_footprints\nga_inventory_canon.gdb\nga_inventory_canon'
-siteFprintDir   = os.path.join(ddir, 'Sites\siteFootprints') # where site strip footprint shps will go, to send to CSF.py
+doDG = True # Run DG footprints in stead of nga_canon/inventory
 
+ddir            = r'E:\MaggieData\ProposalStuff\Biodiversity_2020'
+sitesGdb        = os.path.join(ddir, 'Sites', 'Sites.gdb')
+polygonSites    = os.path.join(sitesGdb, 'Sites_Buffer')
+footprintsFc    = r'E:\MaggieData\NGA_footprints\nga_inventory_canon.gdb\nga_inventory_canon' # initial footprints
+
+siteFprintDir   = os.path.join(ddir, 'Sites', 'siteFootprints') # where site strip footprint shps will go, to send to CSF.py
 mapOutDir       = os.path.join(ddir, 'DensityMaps') # Final outputdir for maps, to send to feature count
+
+# To record the number of features for each site/search combo:
+recordCsv = r'E:\MaggieData\ProposalStuff\Biodiversity_2020\nResults.csv'
+if doDG: recordCsv = recordCsv.replace('.csv', '_DG.csv')
+if not os.path.isfile(recordCsv):
+    with open(recordCsv, 'w') as rc:
+        rc.write('Site,FilterName,nFeat\n')
 
 # Dictionary for output name and search string list:
 #searchOptions = {'WV-M1BS': ['LAST_PROD_:=:M1BS', 'LAST_SENSO: LIKE :WV%'],
 #                 'WV-Stereo': ['LAST_stere:<>: ']} # for nga_canon
 searchOptions = {'WV-M1BS': ['LAST_PROD_:=:M1BS', 'LAST_SENSO: LIKE :WV%'],
                  'WV-Stereo': ['LAST_stere:<>: ']} # for DG footprints
+        
+# Get vars if running DG:
+if doDG:
+    footprintsFc  = r'E:\MaggieData\NGA_footprints\DG_footprints__to2018.gdb\DG_footprints'
+    siteFprintDir = os.path.join(ddir, 'Sites', 'siteFootprints', 'DG')
+    mapOutDir     = os.path.join(ddir, 'DensityMaps', 'DG')
+    
+    # *NOTE, i made PAN, MS1, MS2 and MS columns on .gdb by hand
+    # see biodiversity proposal notes and consider implementing in CSF instead if runDG is True
+    searchOptions = {'WV-M1BS': ["MS:=:yes"],
+                 'WV-Stereo': ["STEREOPAIR:<>:NONE"]} # for DG footprints
 
-# MAYBE WE WANT TO USE THE DG STRIPS LIBRARY INSTEAD OF NGA_CANON:
-# 
+# Create directories
+for d in [siteFprintDir, mapOutDir]:
+    if not os.path.exists(d): os.makedirs(d)
 
-# To record the number of features for each site/search combo:
-recordCsv = r'E:\MaggieData\ProposalStuff\Biodiversity_2020\nResults.csv'
-if not os.path.isfile(recordCsv):
-    with open(recordCsv, 'w') as rc:
-        rc.write('Site,FilterName,nFeat\n')
 
 # Iterate through sites
 features = arcpy.SearchCursor(polygonSites)
@@ -87,8 +103,9 @@ for feat in features:
     #   Create an arg dict to mimic argparse and send to main because nothing else is working
     argDict1 = {'areaShp': sitePolyFc,
                'footprints': footprintsFc,
-               'outputDir': siteFprintDir}
-    
+               'outputDir': siteFprintDir,
+               'doDG': doDG}
+    #import pdb; pdb.set_trace()    
     siteStripsShp = createSiteFootprints.main(argDict1)
     
    

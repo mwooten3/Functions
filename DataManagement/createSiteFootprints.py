@@ -21,7 +21,7 @@ Process:
   add "one" column
   return final output shp
   
-# 6/5: Adding an option to process for DG footprints:
+# 6/5: Adding an option (doDG) to process for DG footprints:
   DG footprints are already strips, so no need to add stripName field or Dissolve
 
   Think about making input be footprintType:
@@ -49,7 +49,13 @@ outputDir = sys.argv[3] # final destination of site footprint strips
 def createField(inShp, fieldName, fieldType, expression):
 
     print "   Adding and creating field {} with expression {}\n".format(fieldName, expression)
-    
+
+    # Check if field already exists first
+    fields = [str(field.name) for field in arcpy.ListFields(inShp)]
+    if fieldName in fields:
+        print "   Field named {} already exists\n".format(fieldName)
+        return inShp
+        
     # Add the field to shp
     arcpy.AddField_management(inShp, fieldName, fieldType, "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 
@@ -110,7 +116,12 @@ def findUtmZone(inShp, ddir):
 def selectFootprintsForAOI(areaShp, fprintFc, ddir):
     
     areaName = os.path.basename(areaShp).replace('.shp', '')
-
+    outSelectShp = os.path.join(ddir, '{}__ngaFootprints.shp'.format(areaName))
+    
+    if os.path.isfile(outSelectShp):
+        print "   Footprints {} already exists\n".format(outSelectShp)
+        return outSelectShp
+    
     print "   Selecting footprints from {} for {}\n".format(fprintFc, areaShp)
     
     # Make selection shp a feature layer
@@ -120,7 +131,7 @@ def selectFootprintsForAOI(areaShp, fprintFc, ddir):
     selection = arcpy.SelectLayerByLocation_management('fprintLayer', "INTERSECT", areaShp, "", "NEW_SELECTION", "NOT_INVERT")
 
     # Save selection as shapefile
-    outSelectShp = os.path.join(ddir, '{}__ngaFootprints.shp'.format(areaName))
+    
     arcpy.CopyFeatures_management(selection, outSelectShp)
     
     return outSelectShp
@@ -128,7 +139,10 @@ def selectFootprintsForAOI(areaShp, fprintFc, ddir):
 def projectToUtm(inFc, srObj):
 
     outProjShp = inFc.replace(".shp", "__UTM.shp")#os.path.join(tempDir, '{}__UTM.shp'.format(areaName))
-
+    if os.path.isfile(outProjShp):
+        print "   Projected output {} already exists\n".format(outProjShp)
+        return outProjShp
+    
     print "   Projecting selected to output {} with {} projection\n".format(outProjShp, srObj.name)
     
     # Project to UTM
@@ -139,9 +153,10 @@ def projectToUtm(inFc, srObj):
 def main(args):
     
     # Unpack args:
-    areaShp = args['areaShp']
+    areaShp     = args['areaShp']
     footprintFc = args['footprints']
-    outputDir = args['outputDir']    
+    outputDir   = args['outputDir']
+    doDG        = args['doDG']
     
     """
     # Input variables (hardcoded):
@@ -150,7 +165,8 @@ def main(args):
     outputDir = r'E:\MaggieData\ProposalStuff\Biodiversity_2020\DensityMaps\siteFootprints'
     """
 
-    # To create shapefiles with strips for featureCount, read in the text file for the field mapping (may be edited from time to time):
+    # To create shapefiles with strips for featureCount, read in the text file
+    # for the field mapping (may be edited):
     fieldMapTxt = r'E:\Code\Functions\DataManagement\nga_canon__fieldMap.txt'
     with open(fieldMapTxt, 'r') as t:
         fieldMap = t.read().strip()
@@ -175,13 +191,17 @@ def main(args):
     # Project selection to AOI's UTM zone:
     selectedShpProj = projectToUtm(selectedShp, utmSrObj)
 
+    if doDG: # Skip strip creation step, shp we want is just the selected proj
+        outputShp = selectedShpProj
+        
     # Add and calculate 2 text fields: dateStr and stripName to projected selection shapefile
-    createField(selectedShpProj, "dateStr", "TEXT", "!SCENE_ID!.split('_')[1][0:8]") # To get date column i.e. '20120127'
-    createField(selectedShpProj, "stripName", "TEXT", "'{}_{}_{}_{}'.format(!SENSOR!, !dateStr!, !PROD_CODE!, !CATALOG_ID!)") # To get strip ID i.e. 'WV02_20120127_M1BS_020937774213'
+    else: # if running archive, must make into strips
+        createField(selectedShpProj, "dateStr", "TEXT", "!SCENE_ID!.split('_')[1][0:8]") # To get date column i.e. '20120127'
+        createField(selectedShpProj, "stripName", "TEXT", "'{}_{}_{}_{}'.format(!SENSOR!, !dateStr!, !PROD_CODE!, !CATALOG_ID!)") # To get strip ID i.e. 'WV02_20120127_M1BS_020937774213'
 
-    # Dissolve on new stripName column to get strips shp
-    createStripsShp(selectedShpProj, outputShp, fieldMap)
-
+        # Dissolve on new stripName column to get strips shp
+        createStripsShp(selectedShpProj, outputShp, fieldMap)
+    
     # And finally add "one" column for featureCount
     createField(outputShp, "one", "SHORT", "1")
 
@@ -195,8 +215,9 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--areaShp", type=str, required=True, help="Input AOI shp")
     parser.add_argument("-f", "--footprints", type=str, required=True, help="Input footprints shp/gdb")
     parser.add_argument("-o", "--outputDir", type=str, required=True, help="Output dir")
-
+    parser.add_argument("-DG", "--doDG", action='store_true', help="Run with DG footprints instead")
+    
     args = vars(parser.parse_args())
 
-    main()
+    main(args)
             
