@@ -104,7 +104,21 @@ class Raster(object):
             os.system(cmd)
             
         return outTif
-    
+
+    #--------------------------------------------------------------------------
+    # resolution()
+    #--------------------------------------------------------------------------
+    def resolution(self):
+        
+        resX = self.ogrGeotransform[1]
+        resY = -self.ogrGeotransform[5]
+        
+        if resX != resY:
+            print "Warning. X pixel size ({}) is different from Y ({})" \
+                                                            .format(resX, resY)
+        
+        return float(resX)
+        
     #--------------------------------------------------------------------------
     # toArray() # Read raster into numpy array
     #--------------------------------------------------------------------------      

@@ -13,6 +13,8 @@ Process:
     
     - If n features > 1000: run multiple iterations and sum the outputs
     
+    
+    
 NOTES!: - This will count scenes within a strip that overlap one another twice.
           In order to count by strip, the input .shp should have those features
           merged into one before running through script
