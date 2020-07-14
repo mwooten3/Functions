@@ -11,6 +11,8 @@ Not the best organization, should definitely put these functions into classes
 that actually make sense, but whatever for now
 
 Code that uses SpatialHelper():
+    - FeatureClass.py
+    - Raster.py
     - something i cant remember/multiple 3DSI zonal stats scripts
     - prepareTrainingData.py
     - others probably
@@ -20,32 +22,30 @@ Code that uses SpatialHelper():
 
 # Change it to GeometryFeature()
 
-# can be point, line, polygon, multipolygon
+# can be point, line, polygon, multipolygon -- self.geometryType
 
 # can convert a point to a different coordinate system (convertPoint instead of convertCoords)
+    # OR just combine convertCoords with reprojectPoint
+# calls to SH.convertCoords in other scripts can be replaced with reprojectPoint()
+    # point objects would have to be passed instead of lat/lon
+# in all functions, shape becomes self
 # can reprojectShape() based on shape type (init)
 
-# can determine UTM zone of feature
+# can determine UTM zone of feature point polygon, multipolygon
 
 
 
 # NOTES (for GDAL classes later):
-# from rasterstats import point_query, zonal_stats
-# from shapely.geometry import Point, Polygon
-# for feature in layer:
-#   lon = feature.GetGeometryRef().Centroid().GetX()
-#   lat = feature.GetGeometryRef().Centroid().GetY()
-#   ptGeom = Point(lon, lat)
-#   ptVal = point_query([ptGeom], mask)[0]
 
 # import time
 # start = time.time()
 # round((time.time()-start)/60, 4)
     
 """
+import os
+import tempfile
 
 from osgeo import osr, ogr
-
 
 #------------------------------------------------------------------------------
 # class SpatialHelper
@@ -80,11 +80,81 @@ class SpatialHelper(object):
    #def determineUtmZone(self, coords, utmShp = ''): 
    
     #--------------------------------------------------------------------------
-    # determineUtmZone()
-    # Determine the UTM (WGS84) zone for a polygon/point objects
-    #--------------------------------------------------------------------------
-    #def determineUtmZone(self):   
+    # determineUtmEpsg()
     
+    # Determine the UTM (WGS84) zone for a polygon/point objects
+    # Must supply the SRS of the input shape
+    #--------------------------------------------------------------------------
+    def determineUtmEpsg(self, shape, shapeSrs):   
+        
+        UTM_FILE = '/att/gpfsfs/briskfs01/ppl/mwooten3/GeneralReference/UTM_Zone_Boundaries.shp'
+        
+        # First, if the SRS of geometry object is not 4326, convert it
+        if int(shapeSrs) != 4326:
+            shape = self.reprojectShape(shape, int(shapeSrs), 4326)
+            
+        # Get the extent of the shape (for irregular shapes, this may
+        # simplify things too much but for most, it should be fine)
+        (xmin, xmax, ymin, ymax) = shape.GetEnvelope()
+        
+        # Now that coords are in WGS84, we can...
+        
+        # If lat/lon coords are outside of UTM extent
+        if ymax >= 84.0:
+            
+            return 32661 # Universal Polar (UPS) North
+        
+        if ymin <= -80.0:
+            
+            return 32761 # UPS South
+        
+        # If within extent, determine UTM epsg by clipping shp
+        
+                # Clip the UTM Shapefile for this bounding box.
+        clipFile = tempfile.mkdtemp()
+
+        cmd = 'ogr2ogr'                        + \
+              ' -clipsrc'                      + \
+              ' ' + str(xmin)                   + \
+              ' ' + str(ymin)                   + \
+              ' ' + str(xmax)                   + \
+              ' ' + str(ymax)                   + \
+              ' -f "ESRI Shapefile"'           + \
+              ' -select "Zone_Hemi"'           + \
+              ' "' + clipFile   + '"'          + \
+              ' "' + UTM_FILE + '"'
+
+        os.system(cmd)
+
+        # Read clipped shapefile
+        driver = ogr.GetDriverByName("ESRI Shapefile")
+        ds = driver.Open(clipFile, 0)
+        layer = ds.GetLayer()
+
+        maxArea = 0
+        for feature in layer:
+            area = feature.GetGeometryRef().GetArea()
+            if area > maxArea:
+                maxArea = area
+                zone, hemi = feature.GetField('Zone_Hemi').split(',')
+
+        """
+        # Configure proj.4 string
+        proj4 = '+proj=utm +zone={} +ellps=WGS84 +datum=WGS84 +units=m +no_defs'.format(zone)
+        if hemi.upper() == 'S': proj4 += ' +south'
+        """
+        
+        # Configure EPSG from zone/hemisphere
+        epsg = '326'
+        if hemi.upper():
+            epsg = '327'
+        epsg += '{}'.format(zone.zfill(2))        
+        
+        # Remove temporary clipFile and its auxiliary files
+        driver.DeleteDataSource(clipFile)
+
+        return epsg
+        
     #--------------------------------------------------------------------------
     # reprojectShape()
     # reprojects a OGR geometry object
