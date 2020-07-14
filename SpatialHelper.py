@@ -150,7 +150,7 @@ class SpatialHelper(object):
         
         # Configure EPSG from zone/hemisphere
         epsg = '326'
-        if hemi.upper():
+        if hemi.upper() == 'S':
             epsg = '327'
         epsg += '{}'.format(zone.zfill(2))        
         
