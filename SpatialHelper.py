@@ -108,9 +108,13 @@ class SpatialHelper(object):
             
             return 32761 # UPS South
         
+        # If shape is point type, we must buffer it by a small amount
+        if shape.GetGeometryName() == 'POINT':
+            xmax = xmax + 0.1
+            ymax = ymax + 0.1
+            
         # If within extent, determine UTM epsg by clipping shp
-        
-                # Clip the UTM Shapefile for this bounding box.
+        # Clip the UTM Shapefile for this bounding box.
         clipFile = tempfile.mkdtemp()
 
         cmd = 'ogr2ogr'                        + \
