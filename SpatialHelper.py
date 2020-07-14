@@ -110,8 +110,10 @@ class SpatialHelper(object):
         
         # If shape is point type, we must buffer it by a small amount
         if shape.GetGeometryName() == 'POINT':
-            xmax = xmax + 0.1
-            ymax = ymax + 0.1
+            xmin = xmin - 0.01 # hundredth of a degree
+            ymin = ymin - 0.01
+            xmax = xmax + 0.01
+            ymax = ymax + 0.01
             
         # If within extent, determine UTM epsg by clipping shp
         # Clip the UTM Shapefile for this bounding box.
