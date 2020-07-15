@@ -93,7 +93,7 @@ class SpatialHelper(object):
         if int(shapeSrs) != 4326:
             shape = self.reprojectShape(shape, int(shapeSrs), 4326)
             
-        # Get the extent of the shape (for irregular shapes, this may
+        # Get the extent of the shape (for irregular polygons, this may
         # simplify things too much but for most, it should be fine)
         (xmin, xmax, ymin, ymax) = shape.GetEnvelope()
         
@@ -149,10 +149,6 @@ class SpatialHelper(object):
         proj4 = '+proj=utm +zone={} +ellps=WGS84 +datum=WGS84 +units=m +no_defs'.format(zone)
         if hemi.upper() == 'S': proj4 += ' +south'
         """
-        try:
-            print hemi
-        except UnboundLocalError:
-            import pdb; pdb.set_trace()
         
         # Configure EPSG from zone/hemisphere
         epsg = '326'
