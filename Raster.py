@@ -35,21 +35,21 @@ class Raster(object):
         if extension != '.vrt' and extension != '.tif':
             raise RuntimeError('{} is not a VRT or TIF file'.format(filePath))
 
-        self.filePath = filePath
+        self.filePath  = filePath
         self.extension = extension
          
         self.baseName = os.path.basename(self.filePath).strip(extension)       
-        self.baseDir = os.path.dirname(self.filePath)
+        self.baseDir  = os.path.dirname(self.filePath)
         
         self.dataset = gdal.Open(self.filePath, gdal.GA_ReadOnly)
         
-        self.noDataValue = self.dataset.GetRasterBand(1).GetNoDataValue()
-        self.ogrDataType = self.dataset.GetRasterBand(1).DataType        
+        self.noDataValue     = self.dataset.GetRasterBand(1).GetNoDataValue()
+        self.ogrDataType     = self.dataset.GetRasterBand(1).DataType        
         self.ogrGeotransform = self.dataset.GetGeoTransform()
-        self.ogrProjection = self.dataset.GetProjection()
-        self.nColumns = int(self.dataset.RasterXSize)
-        self.nRows = int(self.dataset.RasterYSize)
-        self.nLayers = int(self.dataset.RasterCount)
+        self.ogrProjection   = self.dataset.GetProjection()
+        self.nColumns        = int(self.dataset.RasterXSize)
+        self.nRows           = int(self.dataset.RasterYSize)
+        self.nLayers         = int(self.dataset.RasterCount)
 
     #--------------------------------------------------------------------------
     # convertExtent()
