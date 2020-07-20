@@ -149,10 +149,13 @@ class SpatialHelper(object):
         proj4 = '+proj=utm +zone={} +ellps=WGS84 +datum=WGS84 +units=m +no_defs'.format(zone)
         if hemi.upper() == 'S': proj4 += ' +south'
         """
+        """
         try:
             print hemi
         except UnboundLocalError:
             import pdb; pdb.set_trace()
+        """
+        
         # Configure EPSG from zone/hemisphere
         epsg = '326'
         if hemi.upper() == 'S':
