@@ -82,38 +82,32 @@ class SpatialHelper(object):
     #--------------------------------------------------------------------------
     # determineUtmEpsg()
     
-    # Determine the UTM (WGS84) zone for a polygon/point objects
-    # Must supply the SRS of the input shape
+    # Determine the UTM (WGS84) zone from a WGS84 Lat/Lon extent
+    # Extent MUST be in Decimal Degrees (WGS84 Lat/Lon GCS)
+    # Extent MUST be packaged like so: (xmin, xmax, ymin, ymax)
+    
     #--------------------------------------------------------------------------
-    def determineUtmEpsg(self, shape, shapeSrs):   
+    def determineUtmEpsg(self, extent):   
         
         UTM_FILE = '/att/gpfsfs/briskfs01/ppl/mwooten3/GeneralReference/UTM_Zone_Boundaries.shp'
+                   
+        # Unpack the extent 
+        (xmin, xmax, ymin, ymax) = extent
         
-        # First, if the SRS of geometry object is not 4326, convert it
-        if int(shapeSrs) != 4326:
-            shape = self.reprojectShape(shape, int(shapeSrs), 4326)
-            
-        # Get the extent of the shape (for irregular polygons, this may
-        # simplify things too much but for most, it should be fine)
-        (xmin, xmax, ymin, ymax) = shape.GetEnvelope()
-        
-        # Now that coords are in WGS84, we can...
+        # These coords must be in Lat/Lon projection to match the UTM shp proj
         
         # If lat/lon coords are outside of UTM extent
         if ymax >= 84.0:
             
+            print "Warning: UTM zone cannot be determined past 84 deg. N. Returning UPS North EPSG"
+            
             return 32661 # Universal Polar (UPS) North
         
         if ymin <= -80.0:
+
+            print "Warning: UTM zone cannot be determined past 80 deg. S. Returning UPS South EPSG"
             
             return 32761 # UPS South
-        
-        # If shape is point type, we must buffer it by a small amount
-        if shape.GetGeometryName() == 'POINT':
-            xmin = xmin - 0.01 # hundredth of a degree
-            ymin = ymin - 0.01
-            xmax = xmax + 0.01
-            ymax = ymax + 0.01
             
         # If within extent, determine UTM epsg by clipping shp
         # Clip the UTM Shapefile for this bounding box.
@@ -136,6 +130,10 @@ class SpatialHelper(object):
         driver = ogr.GetDriverByName("ESRI Shapefile")
         ds = driver.Open(clipFile, 0)
         layer = ds.GetLayer()
+        
+        featureCount = layer.GetFeatureCount()
+        if featureCount > 3:
+            print "Warning: This extent spans more than three UTM zones"
 
         maxArea = 0
         for feature in layer:
@@ -166,6 +164,37 @@ class SpatialHelper(object):
         driver.DeleteDataSource(clipFile)
 
         return epsg
+
+    #--------------------------------------------------------------------------
+    # determineUtmEpsgFromShape()
+    
+    # Determine the UTM (WGS84) zone for an OGR shape (polygon/point) object
+    # Must supply the SRS of the input shape
+    
+    # This is called in glasCsvToGdb but is currently untested (10/8/2020)
+    
+    #--------------------------------------------------------------------------
+    def determineUtmEpsgFromShape(self, shape, shapeEpsg):   
+        
+        # First, if the SRS of geometry object is not 4326, convert it
+        if int(shapeEpsg) != 4326:
+            shape = self.reprojectShape(shape, int(shapeEpsg), 4326)
+            
+        # Get the extent of the shape (for irregular polygons, this may
+        # simplify things too much but for most, it should be fine)
+        (xmin, xmax, ymin, ymax) = shape.GetEnvelope()
+        
+        # If shape is point type, we must buffer it by a small amount
+        if shape.GetGeometryName() == 'POINT':
+            xmin = xmin - 0.01 # hundredth of a degree
+            ymin = ymin - 0.01
+            xmax = xmax + 0.01
+            ymax = ymax + 0.01
+
+        # Now that coords are in WGS84 dd, we can pass to main function
+        extent = (xmin, xmax, ymin, ymax)
+        
+        return self.determineUtmEpsg(extent)
         
     #--------------------------------------------------------------------------
     # reprojectShape()

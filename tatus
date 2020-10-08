@@ -1,0 +1,144 @@
+[1mdiff --git a/Raster.py b/Raster.py[m
+[1mindex 4d28362..ca42e93 100644[m
+[1m--- a/Raster.py[m
+[1m+++ b/Raster.py[m
+[36m@@ -64,6 +64,7 @@[m [mclass Raster(object):[m
+                                                        self.epsg(), targetEpsg)[m
+     [m
+         return (ulxOut, lryOut, lrxOut, ulyOut)[m
+[32m+[m
+     [m
+     #--------------------------------------------------------------------------[m
+     # epsg() [projection][m
+[36m@@ -133,6 +134,25 @@[m [mclass Raster(object):[m
+             arr[:, :, b] = self.dataset.GetRasterBand(b + 1).ReadAsArray() [m
+             [m
+         return arr  [m
+[32m+[m
+[32m+[m[32m    #--------------------------------------------------------------------------[m
+[32m+[m[32m    # utmZone()[m
+[32m+[m[41m    [m
+[32m+[m[32m    # Determine the UTM (WGS84) Zone for a Raster object[m[41m    [m
+[32m+[m[32m    #--------------------------------------------------------------------------[m
+[32m+[m[32m    def utmZone(self):[m[41m   [m
+[32m+[m[41m        [m
+[32m+[m[32m        # First, if the SRS of the Raster is not 4326, convert extent[m
+[32m+[m[32m        if int(self.epsg()) != 4326:[m
+[32m+[m[32m            (xmin, ymin, xmax, ymax) = self.convertExtent(4326)[m
+[32m+[m[41m            [m
+[32m+[m[32m        # Otherwise, just unpack it[m
+[32m+[m[32m        else:[m
+[32m+[m[32m            (xmin, ymin, xmax, ymax) = self.extent()[m
+[32m+[m
+[32m+[m[32m        # Now that coords are in Lat/Lon WGS84, we can pass to main function[m
+[32m+[m[32m        extent = (xmin, xmax, ymin, ymax)[m
+         [m
+[32m+[m[32m        return SpatialHelper().determineUtmEpsg(extent)[m
+         [m
+         [m
+\ No newline at end of file[m
+[1mdiff --git a/SpatialHelper.py b/SpatialHelper.py[m
+[1mindex d411b0c..02f5f69 100644[m
+[1m--- a/SpatialHelper.py[m
+[1m+++ b/SpatialHelper.py[m
+[36m@@ -82,38 +82,32 @@[m [mclass SpatialHelper(object):[m
+     #--------------------------------------------------------------------------[m
+     # determineUtmEpsg()[m
+     [m
+[31m-    # Determine the UTM (WGS84) zone for a polygon/point objects[m
+[31m-    # Must supply the SRS of the input shape[m
+[32m+[m[32m    # Determine the UTM (WGS84) zone from a WGS84 Lat/Lon extent[m
+[32m+[m[32m    # Extent MUST be in Decimal Degrees (WGS84 Lat/Lon GCS)[m
+[32m+[m[32m    # Extent MUST be packaged like so: (xmin, xmax, ymin, ymax)[m
+[32m+[m[41m    [m
+     #--------------------------------------------------------------------------[m
+[31m-    def determineUtmEpsg(self, shape, shapeSrs):   [m
+[32m+[m[32m    def determineUtmEpsg(self, extent):[m[41m   [m
+         [m
+         UTM_FILE = '/att/gpfsfs/briskfs01/ppl/mwooten3/GeneralReference/UTM_Zone_Boundaries.shp'[m
+[32m+[m[41m                   [m
+[32m+[m[32m        # Unpack the extent[m[41m [m
+[32m+[m[32m        (xmin, xmax, ymin, ymax) = extent[m
+         [m
+[31m-        # First, if the SRS of geometry object is not 4326, convert it[m
+[31m-        if int(shapeSrs) != 4326:[m
+[31m-            shape = self.reprojectShape(shape, int(shapeSrs), 4326)[m
+[31m-            [m
+[31m-        # Get the extent of the shape (for irregular polygons, this may[m
+[31m-        # simplify things too much but for most, it should be fine)[m
+[31m-        (xmin, xmax, ymin, ymax) = shape.GetEnvelope()[m
+[31m-        [m
+[31m-        # Now that coords are in WGS84, we can...[m
+[32m+[m[32m        # These coords must be in Lat/Lon projection to match the UTM shp proj[m
+         [m
+         # If lat/lon coords are outside of UTM extent[m
+         if ymax >= 84.0:[m
+             [m
+[32m+[m[32m            print "Warning: UTM zone cannot be determined past 84 deg. N. Returning UPS North EPSG"[m
+[32m+[m[41m            [m
+             return 32661 # Universal Polar (UPS) North[m
+         [m
+         if ymin <= -80.0:[m
+[32m+[m
+[32m+[m[32m            print "Warning: UTM zone cannot be determined past 80 deg. S. Returning UPS South EPSG"[m
+             [m
+             return 32761 # UPS South[m
+[31m-        [m
+[31m-        # If shape is point type, we must buffer it by a small amount[m
+[31m-        if shape.GetGeometryName() == 'POINT':[m
+[31m-            xmin = xmin - 0.01 # hundredth of a degree[m
+[31m-            ymin = ymin - 0.01[m
+[31m-            xmax = xmax + 0.01[m
+[31m-            ymax = ymax + 0.01[m
+             [m
+         # If within extent, determine UTM epsg by clipping shp[m
+         # Clip the UTM Shapefile for this bounding box.[m
+[36m@@ -136,6 +130,10 @@[m [mclass SpatialHelper(object):[m
+         driver = ogr.GetDriverByName("ESRI Shapefile")[m
+         ds = driver.Open(clipFile, 0)[m
+         layer = ds.GetLayer()[m
+[32m+[m[41m        [m
+[32m+[m[32m        featureCount = layer.GetFeatureCount()[m
+[32m+[m[32m        if featureCount > 3:[m
+[32m+[m[32m            print "Warning: This extent spans more than three UTM zones"[m
+ [m
+         maxArea = 0[m
+         for feature in layer:[m
+[36m@@ -166,6 +164,37 @@[m [mclass SpatialHelper(object):[m
+         driver.DeleteDataSource(clipFile)[m
+ [m
+         return epsg[m
+[32m+[m
+[32m+[m[32m    #--------------------------------------------------------------------------[m
+[32m+[m[32m    # determineUtmEpsgFromShape()[m
+[32m+[m[41m    [m
+[32m+[m[32m    # Determine the UTM (WGS84) zone for an OGR shape (polygon/point) object[m
+[32m+[m[32m    # Must supply the SRS of the input shape[m
+[32m+[m[41m    [m
+[32m+[m[32m    # This is called in glasCsvToGdb but is currently untested (10/8/2020)[m
+[32m+[m[41m    [m
+[32m+[m[32m    #--------------------------------------------------------------------------[m
+[32m+[m[32m    def determineUtmEpsgFromShape(self, shape, shapeEpsg):[m[41m   [m
+[32m+[m[41m        [m
+[32m+[m[32m        # First, if the SRS of geometry object is not 4326, convert it[m
+[32m+[m[32m        if int(shapeEpsg) != 4326:[m
+[32m+[m[32m            shape = self.reprojectShape(shape, int(shapeEpsg), 4326)[m
+[32m+[m[41m            [m
+[32m+[m[32m        # Get the extent of the shape (for irregular polygons, this may[m
+[32m+[m[32m        # simplify things too much but for most, it should be fine)[m
+[32m+[m[32m        (xmin, xmax, ymin, ymax) = shape.GetEnvelope()[m
+[32m+[m[41m        [m
+[32m+[m[32m        # If shape is point type, we must buffer it by a small amount[m
+[32m+[m[32m        if shape.GetGeometryName() == 'POINT':[m
+[32m+[m[32m            xmin = xmin - 0.01 # hundredth of a degree[m
+[32m+[m[32m            ymin = ymin - 0.01[m
+[32m+[m[32m            xmax = xmax + 0.01[m
+[32m+[m[32m            ymax = ymax + 0.01[m
+[32m+[m
+[32m+[m[32m        # Now that coords are in WGS84 dd, we can pass to main function[m
+[32m+[m[32m        extent = (xmin, xmax, ymin, ymax)[m
+[32m+[m[41m        [m
+[32m+[m[32m        return self.determineUtmEpsg(extent)[m
+         [m
+     #--------------------------------------------------------------------------[m
+     # reprojectShape()[m

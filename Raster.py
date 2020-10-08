@@ -64,6 +64,7 @@ class Raster(object):
                                                        self.epsg(), targetEpsg)
     
         return (ulxOut, lryOut, lrxOut, ulyOut)
+
     
     #--------------------------------------------------------------------------
     # epsg() [projection]
@@ -133,6 +134,25 @@ class Raster(object):
             arr[:, :, b] = self.dataset.GetRasterBand(b + 1).ReadAsArray() 
             
         return arr  
+
+    #--------------------------------------------------------------------------
+    # utmZone()
+    
+    # Determine the UTM (WGS84) Zone for a Raster object    
+    #--------------------------------------------------------------------------
+    def utmZone(self):   
         
+        # First, if the SRS of the Raster is not 4326, convert extent
+        if int(self.epsg()) != 4326:
+            (xmin, ymin, xmax, ymax) = self.convertExtent(4326)
+            
+        # Otherwise, just unpack it
+        else:
+            (xmin, ymin, xmax, ymax) = self.extent()
+
+        # Now that coords are in Lat/Lon WGS84, we can pass to main function
+        extent = (xmin, xmax, ymin, ymax)
+        
+        return SpatialHelper().determineUtmEpsg(extent)
         
         
