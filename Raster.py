@@ -140,7 +140,7 @@ class Raster(object):
     
     # Determine the UTM (WGS84) Zone for a Raster object    
     #--------------------------------------------------------------------------
-    def utmZone(self):   
+    def utmEpsg(self):   
         
         # First, if the SRS of the Raster is not 4326, convert extent
         if int(self.epsg()) != 4326:
