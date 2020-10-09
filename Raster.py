@@ -118,7 +118,7 @@ class Raster(object):
             print "Warning. X pixel size ({}) is different from Y ({})" \
                                                             .format(resX, resY)
         
-        return float(resX)
+        return float(resX), float(resY)
         
     #--------------------------------------------------------------------------
     # toArray() # Read raster into numpy array
