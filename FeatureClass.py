@@ -9,7 +9,7 @@ FeatureClass describes a polygon .shp or .gdb
 import os
 import tempfile
 
-from osgeo import ogr
+from osgeo import ogr, gdal
 
 from SpatialHelper import SpatialHelper
 
@@ -207,3 +207,17 @@ class FeatureClass(object):
             fields.append(fieldDefn.name)
                 
         return fields
+    
+    #--------------------------------------------------------------------------
+    # removeField()
+    #--------------------------------------------------------------------------
+    def removeField(self, fieldName):
+        
+        # Open dataset this way for this:
+        ds = gdal.OpenEx(self.filePath, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        
+        ds.ExecuteSQL("ALTER TABLE {} DROP COLUMN {}".format(self.baseName, fieldName))
+
+        ds = None
+        
+        return None
