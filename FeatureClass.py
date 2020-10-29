@@ -213,6 +213,8 @@ class FeatureClass(object):
     #--------------------------------------------------------------------------
     def removeField(self, fieldName):
         
+        # This does not seem to work all the time. Still leave it here for now
+        
         # Open dataset this way for this:
         ds = gdal.OpenEx(self.filePath, gdal.OF_VECTOR | gdal.OF_UPDATE)
         
