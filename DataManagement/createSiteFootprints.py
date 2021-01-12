@@ -19,6 +19,7 @@ Process:
   Import field map for dissolve and
   dissolve on stripName
   add "one" column
+  add a 'uId' column that is = FID because the latter will not get preserved after applying filter FOR SOME GODDAMN REASON EVEN THO IT USED TO WORK
   return final output shp
   
 # 6/5: Adding an option (doDG) to process for DG footprints:
@@ -180,7 +181,7 @@ def main(args):
         os.makedirs(tempDir)
 
     outputShp = os.path.join(outputDir, '{}__ngaStrips.shp'.format(areaName))
-    print "\nCreating site footprints shapefile {} \n".format(outputShp)
+
     
     # First get the footprints that intersect with the AOI
     selectedShp = selectFootprintsForAOI(areaShp, footprintFc, tempDir)
@@ -192,18 +193,29 @@ def main(args):
     selectedShpProj = projectToUtm(selectedShp, utmSrObj)
 
     if doDG: # Skip strip creation step, shp we want is just the selected proj
-        outputShp = selectedShpProj
+        #outputShp = selectedShpProj
+        arcpy.CopyFeatures_management(selectedShpProj, outputShp)
+        #TO-DO: add dateStr, year, month columns as well. For now been doing this on output after the fact
+
+        print "\nCreating site footprints shapefile {} \n".format(outputShp)
         
     # Add and calculate 2 text fields: dateStr and stripName to projected selection shapefile
+    # 11/20/2020: Adding month field as well
     else: # if running archive, must make into strips
+        print "\nCreating site footprints shapefile {} \n".format(outputShp)
+        print "Adding some fields"
         createField(selectedShpProj, "dateStr", "TEXT", "!SCENE_ID!.split('_')[1][0:8]") # To get date column i.e. '20120127'
         createField(selectedShpProj, "stripName", "TEXT", "'{}_{}_{}_{}'.format(!SENSOR!, !dateStr!, !PROD_CODE!, !CATALOG_ID!)") # To get strip ID i.e. 'WV02_20120127_M1BS_020937774213'
-
+        createField(selectedShpProj, "year", "SHORT", "!dateStr![0:4]") # To get year column i.e. '2020'
+        createField(selectedShpProj, "month", "SHORT", "!dateStr![4:6]") # To get month column i.e. 1, ..., 12
+        
         # Dissolve on new stripName column to get strips shp
         createStripsShp(selectedShpProj, outputShp, fieldMap)
     
     # And finally add "one" column for featureCount
+    # Always do this, doDg or not
     createField(outputShp, "one", "SHORT", "1")
+    createField(outputShp, "uId", "SHORT", "!FID!")
 
     print "\nCreated output {}\n".format(outputShp)
 

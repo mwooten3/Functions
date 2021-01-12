@@ -36,7 +36,7 @@ class FeatureClass(object):
         self.filePath = filePath
         self.extension = extension
 
-        self.baseName = os.path.basename(self.filePath).strip(extension)     
+        self.baseName = os.path.basename(self.filePath).replace(extension, '')     
         self.baseDir = os.path.dirname(self.filePath)
 
         # Set self.driver depending on the extention

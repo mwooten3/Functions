@@ -23,9 +23,9 @@ NOTES!: - This will count scenes within a strip that overlap one another twice.
                2. Create a stripName (sensor_dateStr_spectype_catID) field =
                    '{}_{}_{}_{}'.format( !SENSOR!, !dateStr!, !PROD_CODE!, !CATALOG_ID!)
                3. Dissolve based on stripName
-           DO THIS BEFORE adding "one" column
+           DO THIS BEFORE adding "one" and "uId" columns
         - ALSO: .shp projection unit must match outRes unit i.e. UTM for res in meters
-        - AND:  .shp MUST have an int column "one" where every row = 1
+        - AND:  .shp MUST have an int column "one" where every row = 1, uId = FID
     
 Optional (later):
     An optional dictionary argument with fieldname:argument to use in where clause
@@ -34,6 +34,8 @@ Optional (later):
         Order of inputs for CL: siteFootprintsShp searchTerms outputName outputDir
 
 6/2/2020: Moving input arguments to argparse. Can still hardcode parts after unpacking if necessary
+
+11/23/2020: Changing FID usage to our new uId 
 """
 
 
@@ -48,6 +50,10 @@ arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 #from arcpy import sa
 
+# because arc is being fucking stupid
+iterFeatLayer = None
+inFeatLayer = None
+
 # Apply search terms to shapefile --> feature layer
 # Does not support float values
 def applySearchTerms(shp, searchTerms):
@@ -58,13 +64,20 @@ def applySearchTerms(shp, searchTerms):
         # Check to see if term value (3rd part) is an integer
         try:
             int(st.split(':')[2]) # If successful, addWhere with no ' '
-            addWhere =  '("{}"{}{}) AND'.format(*st.split(':')) 
+            addWhere =  '("{}"{}{}) AND '.format(*st.split(':')) 
         except ValueError: # Not a number. Add with ' ' around
-            addWhere =  '("{}"{}\'{}\') AND'.format(*st.split(':'))
+            
+            # First, check if it is a list (in Arc, we do "'columnX' In (1, 2, 3)" ,
+            # if we wanna select all items in columnX that are in a list (represented as a tuple here))
+            # This only works for multiple items in list/tuple
+            if "(" and ")" in st.split(':')[2]:
+                addWhere = '("{}" {} {}) AND '.format(*st.split(':'))
+            else: # Assume the search value is a string
+                addWhere =  '("{}"{}\'{}\') AND '.format(*st.split(':'))
 
         whereClause += addWhere
         
-    whereClause = whereClause.strip(' AND')
+    whereClause = whereClause.strip(' AND ')
 
     inFeatLayer = arcpy.MakeFeatureLayer_management(shp, "features", whereClause)    
     
@@ -78,28 +91,30 @@ def featuresToRaster(featureLayer, tempdir, outRes, outSumRaster):
     
     features = arcpy.SearchCursor(featureLayer)
     for feat in features:
-        fid = feat.getValue("FID")
+        fid = feat.getValue("uId")
         outRast = os.path.join(tempdir, '{}.tif'.format(fid))
         
         # Isolate feature and save as feature layer --> raster
-        arcpy.SelectLayerByAttribute_management(featureLayer, "NEW_SELECTION", '"FID"={}'.format(fid))                    
+        arcpy.SelectLayerByAttribute_management(featureLayer, "NEW_SELECTION", '"uId"={}'.format(fid))                    
         arcpy.FeatureToRaster_conversion(featureLayer, "one", outRast, outRes)
 #        # temporarily convert FL to shp to check:
         #arcpy.CopyFeatures_management(featureLayer, outRast.replace('tif', 'shp'))
         rastersList.append(outRast)      
 
     # Sum all the features
+    arcpy.CheckOutExtension("Spatial")
     sumRasters(rastersList, outSumRaster)
     
     return outSumRaster 
     
 # In some cases we need a list of unique FIDs (in order) from a feature layer
+# 11/23 uId now
 def getUniqueFIDs(featureLayer):
     
     uniqueFIDs = []
     features = arcpy.SearchCursor(featureLayer)
     for feat in features:
-        uniqueFIDs.append(feat.getValue("FID"))
+        uniqueFIDs.append(feat.getValue("uId"))
         
     return sorted(uniqueFIDs)
         
@@ -120,7 +135,7 @@ def main(args):
     outdir      = args['outputDir']
     outRes      = args['outputRes']
 
-    tempdir = os.path.join(outdir, 'temp', outname.split('_')[0])
+    tempdir = os.path.join(outdir, 'temp', outname)
     if not os.path.exists(tempdir):
         os.makedirs(tempdir)
         
@@ -155,19 +170,20 @@ def main(args):
     print "Creating {}...\n".format(outSumRaster)
     
     print "Input footprints shp: {}".format(inputShp)
+    print "Output name: {}".format(outname)
     if searchTerms: print " Filters: {}".format(searchTerms)
     
     maxFeatures = 1000 # there is a 1000 raster limit for sumRasters. must split into iters based off that
     
     for d in [outdir, tempdir]:
         if not os.path.isdir(d): os.mkdir(d)
-    
+
     # Get the input feature layer: Apply search terms to input shp/gdb if specified
     if searchTerms:
         inFeatLayer = applySearchTerms(inputShp, searchTerms)
     else:
         inFeatLayer = arcpy.MakeFeatureLayer_management(inputShp, "features")
-    
+    #import pdb;pdb.set_trace()
     nFeatures = int(arcpy.GetCount_management(inFeatLayer).getOutput(0))
     if nFeatures == 0:
         print '\nThere were 0 features for this input shp/filter combination'
@@ -178,9 +194,10 @@ def main(args):
     if nFeatures > maxFeatures:
        
         # For each iteration, featuresToRaster, then sum outputs from FTR
+        # These are actually from uId column now
         FIDs = getUniqueFIDs(inFeatLayer) # get FIDs from feature layer. len should = nFeatures
         if len(FIDs) != nFeatures: 
-            print "Number of unique FIDs do not match number of features in layer. Please try again"
+            print "Number of unique uIds do not match number of features in layer. Please try again"
             return None
             #sys.exit()
             
@@ -198,9 +215,9 @@ def main(args):
                 b = nFeatures # if we are in the last iteration, b = end of list
     
             # Get feature layer for iteration subset - Apply FID bounds to get feature layer
-            whereClause = '("FID" >= {}) AND ("FID" <= {})'.format(FIDs[a], FIDs[b-1])
+            whereClause = '("uId" >= {}) AND ("uId" <= {})'.format(FIDs[a], FIDs[b-1])
             print "   where clause: {}".format(whereClause)
-            iterFeatLayer = arcpy.MakeFeatureLayer_management(inFeatLayer, "features", whereClause)
+            iterFeatLayer = arcpy.MakeFeatureLayer_management(inFeatLayer, "features{}".format(i+1), whereClause)
             
             # Get the count/sum raster for the iteration subset
             outIterSumRaster = os.path.join(tempdir, '{}-i{}.tif'.format(outname, i))
