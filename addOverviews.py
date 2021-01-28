@@ -39,10 +39,11 @@ def main(args):
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("directory", type=str, required=True, 
+    parser.add_argument("directory", type=str, 
                         help="Directory with .tifs to create overviews for")
     
     # Maybe add other options later such as: 
+    #   search term (ie if we only want to run inDir/*searchTerm*tif instead of inDir/*tif)
     #   internal ovr (external is default)
     #   different pyramids (default 2 4 8 16)
     #   quiet (suppress output, default is False)
