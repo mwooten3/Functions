@@ -20,9 +20,6 @@ import argparse
 
 from FeatureClass import FeatureClass
 
-# Set up directories - these are kinda hardcoded according to current set-up in other code
-#inDir = '/att/gpfsfs/briskfs01/ppl/mwooten3/3DSI/ZonalStats/_zonalStatsGdb'
-#outDir = '/att/gpfsfs/briskfs01/ppl/mwooten3/3DSI/ZonalStats'
     
 def main(args):
     
