@@ -26,15 +26,16 @@ def main(args):
         print "There are 0 .tif files in {}".format(inDir)
         return None
     else:
-        print "Adding overviews for {} .tifs...".format(nTifs)
+        print "Adding overviews for {} .tifs...\n".format(nTifs)
         
     for tif in inTifs:
         
         # Create overview:
         cmd = 'gdaladdo -ro --config COMPRESS_OVERVIEW LZW --config BIGTIFF_OVERVIEW YES {} 2 4 8 16 32 64'.format(tif)
-        os.system(cmd)
+        print cmd
+        #os.system(cmd)
         
-    
+    return None
 
 if __name__ == "__main__":
     
