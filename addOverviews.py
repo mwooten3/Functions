@@ -32,8 +32,8 @@ def main(args):
         
         # Create overview:
         cmd = 'gdaladdo -ro --config COMPRESS_OVERVIEW LZW --config BIGTIFF_OVERVIEW YES {} 2 4 8 16 32 64'.format(tif)
-        print cmd
-        #os.system(cmd)
+        #print cmd
+        os.system(cmd)
         
     return None
 
