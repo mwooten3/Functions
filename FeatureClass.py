@@ -98,9 +98,11 @@ class FeatureClass(object):
                 stmt = "Field names for output feature class ({}) do not match field names for input ({})".format(outFc.fieldNames(), self.fieldNames())
                 print stmt
                 
+                outFc = None
                 return None
             
             cmd += ' -update -append'
+            outFc = None
             
         if moreArgs: # Right now just a string but eventually be list
             cmd += ' {}'.format(moreArgs)
