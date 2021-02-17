@@ -23,10 +23,10 @@ def main(args):
     nTifs  = len(inTifs)
     
     if nTifs == 0:
-        print "There are 0 .tif files in {}".format(inDir)
+        print ("There are 0 .tif files in {}".format(inDir))
         return None
     else:
-        print "Adding overviews for {} .tifs...\n".format(nTifs)
+        print ("Adding overviews for {} .tifs...\n".format(nTifs))
         
     for tif in inTifs:
         
