@@ -29,7 +29,8 @@ Process:
       if fprntype == 'inHouse': nga_canon scenes
       if fprntype == 'DG': DigitalGlobeStrips
     Then use fprntype to determine steps
- 
+
+# 2/18/2021: Editing code to only select/merge data whose 'status' field = "online"
   
   
 """
@@ -131,9 +132,12 @@ def selectFootprintsForAOI(areaShp, fprintFc, ddir):
     # Select footprints that intersect with AOI
     selection = arcpy.SelectLayerByLocation_management('fprintLayer', "INTERSECT", areaShp, "", "NEW_SELECTION", "NOT_INVERT")
 
+    # Further, only select footprints whose status is online:
+    qry = '"status" = \'online\''
+    selection2 = arcpy.SelectLayerByAttribute_management(selection, 'SUBSET_SELECTION', qry)
+
     # Save selection as shapefile
-    
-    arcpy.CopyFeatures_management(selection, outSelectShp)
+    arcpy.CopyFeatures_management(selection2, outSelectShp)
     
     return outSelectShp
 

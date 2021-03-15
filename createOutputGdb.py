@@ -17,6 +17,7 @@ Process:
 #import os
 #import glob
 import argparse
+import time
 
 from FeatureClass import FeatureClass
 
@@ -27,6 +28,10 @@ def main(args):
     inputList  = args['inputList']
     outputGDB  = args['outGDB']
 
+    # Start clock
+    start = time.time()
+    print "BEGIN: {}\n".format(time.strftime("%m-%d-%y %I:%M:%S"))
+    
     # Read input list into list. Assume all inputs exist. 
     # If they do not, FC should throw RuntimeError
     # Can add skip later if we want to avoid error due to shp not existing
@@ -40,23 +45,10 @@ def main(args):
         #zs.updateOutputGdb(outGdb, f)
         fc = FeatureClass(inFc)
         fc.addToFeatureClass(outputGDB)
-
-    """
-    bname = '{}__{}__ZonalStats'.format(zonalType, stackType)    
-    outGdb = os.path.join(outDir, '{}.gdb'.format(bname))
     
-    globDir = glob.glob(os.path.join(inDir, '{}*gpkg'.format(bname)))
-    print "\nCreating {} from {} input files...\n".format(outGdb, len(globDir))
-    import pdb; pdb.set_trace()
-    for f in globDir:
-        print f
-        zs.updateOutputGdb(outGdb, f)
-        
-        
-#    # Lastly, move the csv to its final directory
-#    mvCsv = os.path.join(inDir, '{}.csv'.format(bname))
-#    os.system('mv {} {}'.format(mvCsv, outDir))
-    """
+    elapsedTime = round((time.time()-start)/60, 4)
+    print "\nEND: {}\n".format(time.strftime("%m-%d-%y %I:%M:%S"))
+    print "Completed in {} minutes".format(elapsedTime)
     
 if __name__ == "__main__":
     

@@ -8,7 +8,7 @@
 
 
 #tfile = raw_input("Enter the full path to the input text list: ")
-tfile = r'C:\\Users\\mwooten3\\Desktop\\del.txt'
+tfile = r'E:\MaggieData\EVHR_work\randomRequests\ChrisPotter\ChrisPotter_scenes.txt'#'C:\\Users\\mwooten3\\Desktop\\del.txt'
 
 with open(tfile, 'r') as pl:
     scenes = pl.read().splitlines()

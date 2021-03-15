@@ -25,7 +25,7 @@ NOTES!: - This will count scenes within a strip that overlap one another twice.
                3. Dissolve based on stripName
            DO THIS BEFORE adding "one" and "uId" columns
         - ALSO: .shp projection unit must match outRes unit i.e. UTM for res in meters
-        - AND:  .shp MUST have an int column "one" where every row = 1, uId = FID
+        - AND:  .shp MUST have an int column "one" where every row = 1 AND a "uId" column where uId = FID (or FID+1)
     
 Optional (later):
     An optional dictionary argument with fieldname:argument to use in where clause
@@ -58,6 +58,7 @@ inFeatLayer = None
 # Does not support float values
 def applySearchTerms(shp, searchTerms):
     #import pdb;pdb.set_trace()
+
     whereClause = ''
     for st in searchTerms:
         
@@ -79,7 +80,8 @@ def applySearchTerms(shp, searchTerms):
         
     whereClause = whereClause.strip(' AND ')
 
-    inFeatLayer = arcpy.MakeFeatureLayer_management(shp, "features", whereClause)    
+    
+    inFeatLayer = arcpy.MakeFeatureLayer_management(shp, "features", whereClause)
     
     return inFeatLayer
     
