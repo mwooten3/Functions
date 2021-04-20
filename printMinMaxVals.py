@@ -1,10 +1,11 @@
 # Print min/max and values for all .tifs in a directory
 
 import os
+import sys
 import glob
 
 
-indir = '/att/gpfsfs/briskfs01/ppl/mwooten3/EVHR_API/evhrDevelopment/Output/requests/redo-kassassaTilesMS-fFv8JlhtjYOvWog_dXCLTGWelqf9Cnui5CaZhMjB/5-toas'
+indir = sys.argv[1]
 gdir = glob.glob(os.path.join(indir, '*tif'))
 
 
