@@ -15,7 +15,7 @@ for tif in gdir:
     # use os.system over print so everything prints at the same time
     cmd = 'basename {}'.format(tif)
     os.system(cmd)
-        cmd = 'gdalinfo {} -mm | grep "Min/Max"'.format(tif)
+    cmd = 'gdalinfo {} -mm | grep "Min/Max"'.format(tif)
     os.system(cmd)
 
     #print ''
