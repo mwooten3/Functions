@@ -10,6 +10,8 @@ Requirements:
     Pan and MS data should be in same/similar location ie:
       Pan dir/files must be accessible via replacing M1BS with P1BS
     Every MS strip should have corresponding Pan strip
+
+    MS filename must match *M1BS*toa.tif search key
     
 Process:
     For each MS file in list/directory:
@@ -30,11 +32,13 @@ os.system('mkdir -p {}'.format(outDir))
 
 
 # Iterate through MS data and pan-sharpen:
-for msTif in glob.glob(os.path.join(msDir, '*tif')):
-    
+for msTif in glob.glob(os.path.join(msDir, '*M1BS*toa.tif')):
+#    print msTif    
     bname = os.path.basename(msTif)
     
     panTif = msTif.replace('M1BS', 'P1BS')
+#    print panTif
+#    sys.exit()
     if not os.path.isfile(panTif):
         print "Pan file ({}) for MS file ({}) does not exist\n".format(panTif, msTif)
         continue

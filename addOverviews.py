@@ -3,7 +3,7 @@
 Created on Thu Jan 28 12:07:53 2021
 @author: mwooten3
 
-Create overviews for .tif files in a given directory
+Create overviews for .tif files in a given directory or text file
 """
 
 import os
@@ -16,24 +16,35 @@ def main(args):
     inDir  = args['directory']
     
     # Check input
-    if not os.path.isdir(inDir):
-        raise RuntimeError("Input {} is not a directory or does not exist".format(inDir))
+    if not os.path.isdir(inDir) and (not os.path.exists(inDir) or not inDir.endswith('.txt')):
+        raise RuntimeError("Input {} is not a directory, text file, or does not exist".format(inDir))
     
-    inTifs = glob.glob(os.path.join(inDir, '*tif'))
+    # Get list of input .tif files
+    if os.path.isdir(inDir):
+        inTifs = glob.glob(os.path.join(inDir, '*tif'))
+    else:
+        with open(inDir, 'r') as it:
+            inTifs = [f.strip() for f in it.readlines()]
+
     nTifs  = len(inTifs)
     
     if nTifs == 0:
-        print ("There are 0 .tif files in {}".format(inDir))
+        print ("0 .tif files exist in/from {}".format(inDir))
         return None
     else:
         print ("Adding overviews for {} .tifs...\n".format(nTifs))
         
     for tif in inTifs:
         
-        # Create overview:
-        cmd = 'gdaladdo -ro --config COMPRESS_OVERVIEW LZW --config BIGTIFF_OVERVIEW YES {} 2 4 8 16 32 64'.format(tif)
-        #print cmd
-        os.system(cmd)
+        # Check existence (only works for external overviews):
+        ovr = '{}.ovr'.format(tif)
+        if not os.path.exists(ovr):
+            # Create overview:
+            cmd = 'gdaladdo -ro --config COMPRESS_OVERVIEW LZW --config BIGTIFF_OVERVIEW YES {} 2 4 8 16 32 64'.format(tif)
+            #print cmd
+            os.system(cmd)
+        else:
+            print '{} exists'.format(ovr)
         
     return None
 
