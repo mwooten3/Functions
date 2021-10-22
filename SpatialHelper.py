@@ -99,13 +99,13 @@ class SpatialHelper(object):
         # If lat/lon coords are outside of UTM extent
         if ymax >= 84.0:
             
-            print "Warning: UTM zone cannot be determined past 84 deg. N. Returning UPS North EPSG"
+            print("Warning: UTM zone cannot be determined past 84 deg. N. Returning UPS North EPSG")
             
             return 32661 # Universal Polar (UPS) North
         
         if ymin <= -80.0:
 
-            print "Warning: UTM zone cannot be determined past 80 deg. S. Returning UPS South EPSG"
+            print("Warning: UTM zone cannot be determined past 80 deg. S. Returning UPS South EPSG")
             
             return 32761 # UPS South
             
@@ -133,7 +133,7 @@ class SpatialHelper(object):
         
         featureCount = layer.GetFeatureCount()
         if featureCount > 3:
-            print "Warning: This extent spans more than three UTM zones"
+            print("Warning: This extent spans more than three UTM zones")
 
         maxArea = 0
         for feature in layer:
@@ -149,7 +149,7 @@ class SpatialHelper(object):
         """
         """
         try:
-            print hemi
+            print(hemi)
         except UnboundLocalError:
             import pdb; pdb.set_trace()
         """

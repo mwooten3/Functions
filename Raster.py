@@ -115,8 +115,8 @@ class Raster(object):
         resY = -self.ogrGeotransform[5]
         
         if resX != resY:
-            print "Warning. X pixel size ({}) is different from Y ({})" \
-                                                            .format(resX, resY)
+            print("Warning. X pixel size ({}) is different from Y ({})" \
+                                                           .format(resX, resY))
         
         return float(resX), float(resY)
         

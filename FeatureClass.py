@@ -81,10 +81,10 @@ class FeatureClass(object):
         elif ext == '.shp':
             outDrv = 'ESRI Shapefile' #**CHECK THIS**
         else:
-            print "\nUnrecognized output extension '{}'".format(ext)
+            print("\nUnrecognized output extension '{}'".format(ext))
             return None
                 
-        print "\nUpdating/creating {} with {}".format(outFcPath, self.filePath)
+        print("\nUpdating/creating {} with {}".format(outFcPath, self.filePath))
                 
         layerName = os.path.basename(outFcPath).replace(ext, '')
         cmd = 'ogr2ogr -nln {} -a_srs EPSG:4326 -t_srs EPSG:4326'.format(layerName)
@@ -96,7 +96,7 @@ class FeatureClass(object):
             if outFc.fieldNames() != self.fieldNames():
                 
                 stmt = "Field names for output feature class ({}) do not match field names for input ({})".format(outFc.fieldNames(), self.fieldNames())
-                print stmt
+                print(stmt)
                 
                 outFc = None
                 return None
@@ -109,7 +109,7 @@ class FeatureClass(object):
                     
         cmd += ' -f "{}" {} {}'.format(outDrv, outFcPath, self.filePath) 
                 
-        print '', cmd
+        print('', cmd)
         os.system(cmd)
             
         return None
@@ -149,7 +149,7 @@ class FeatureClass(object):
         
         # Set SQL query on src if statement is supplied:
         if sqlQuery: cmd += ' -clipsrcsql "{}"'.format(sqlQuery)
-        print '', cmd # for now
+        print('', cmd) # for now
         os.system(cmd)
         
         if not os.path.isfile(clipFile):
