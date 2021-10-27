@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Stand-alone script to make a footprints .shp using a text list of input rasters
@@ -25,7 +26,7 @@ if os.path.isdir(Input):
 elif os.path.isfile(Input) and Input.endswith('.txt'):
     with open(Input, 'r') as inf:
        inTifs = [f.strip() for f in inf.readlines() if f.strip().endswith('.tif')]
-else: print "Input must be a directory or text file"
+else: print("Input must be a directory or text file")
 
 if len(inTifs) == 0:
     sys.exit("Input {} had 0 .tifs. Please try again".format(Input))
@@ -42,9 +43,9 @@ newFields = OrderedDict([('fileName', [ogr.OFTString, 100]), ('sensor', [ogr.OFT
     
     
 # Create .shp from list of input .tif files
-print "BUILDING .SHP for {} inputs\n".format(len(inTifs))
+print("BUILDING .SHP for {} inputs\n".format(len(inTifs)))
 cmd = 'gdaltindex -t_srs "EPSG:4326" -src_srs_name SRS -write_absolute_path -tileindex {} {} {}'.format(pathFieldName, Output,' '.join(inTifs))
-print " {}".format(cmd)
+print(" {}".format(cmd))
 os.system(cmd)
 
 # Now edit the shapefile 

@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on Wed Dec 18 14:50:10 2019
@@ -33,23 +34,23 @@ os.system('mkdir -p {}'.format(outDir))
 
 # Iterate through MS data and pan-sharpen:
 for msTif in glob.glob(os.path.join(msDir, '*M1BS*toa.tif')):
-#    print msTif    
+#    print(msTif)    
     bname = os.path.basename(msTif)
     
     panTif = msTif.replace('M1BS', 'P1BS')
-#    print panTif
+#    print(panTif)
 #    sys.exit()
     if not os.path.isfile(panTif):
-        print "Pan file ({}) for MS file ({}) does not exist\n".format(panTif, msTif)
+        print("Pan file ({}) for MS file ({}) does not exist\n".format(panTif, msTif))
         continue
     
-    print "Pansharpening {} with {}...".format(bname, panTif)
+    print("Pansharpening {} with {}...".format(bname, panTif))
     
     psTif = os.path.join(outDir, bname.replace('.tif', '_pansharpen.tif'))
     
     # for now, hardcode nodata value of -9999
     cmd = 'gdal_pansharpen.py {} {} {} -nodata -9999 -co COMPRESS=LZW -co BIGTIFF=YES'.format(panTif, msTif, psTif)
-    print cmd
+    print(cmd)
     os.system(cmd)
     
     # copy and rename the .xml as well 
@@ -58,4 +59,4 @@ for msTif in glob.glob(os.path.join(msDir, '*M1BS*toa.tif')):
     if os.path.isfile(msXml):
         os.system('cp {} {}'.format(msXml, psXml))
         
-    print ''
+    print('')
