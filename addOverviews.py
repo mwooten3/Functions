@@ -29,10 +29,10 @@ def main(args):
     nTifs  = len(inTifs)
     
     if nTifs == 0:
-        print ("0 .tif files exist in/from {}".format(inDir))
+        print("0 .tif files exist in/from {}".format(inDir))
         return None
     else:
-        print ("Adding overviews for {} .tifs...\n".format(nTifs))
+        print("Adding overviews for {} .tifs...\n".format(nTifs))
         
     for tif in inTifs:
         
@@ -44,7 +44,7 @@ def main(args):
             #print cmd
             os.system(cmd)
         else:
-            print '{} exists'.format(ovr)
+            print('{} exists'.format(ovr))
         
     return None
 

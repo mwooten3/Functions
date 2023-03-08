@@ -30,7 +30,7 @@ def main(args):
 
     # Start clock
     start = time.time()
-    print "BEGIN: {}\n".format(time.strftime("%m-%d-%y %I:%M:%S"))
+    print("BEGIN: {}\n".format(time.strftime("%m-%d-%y %I:%M:%S")))
     
     # Read input list into list. Assume all inputs exist. 
     # If they do not, FC should throw RuntimeError
@@ -38,7 +38,7 @@ def main(args):
     with open (inputList, 'r') as l:
         inFcs = [x.strip('\r\n') for x in l.readlines()]
 
-    print "Adding {} feature classes to {}\n".format(len(inFcs), outputGDB)
+    print("Adding {} feature classes to {}\n".format(len(inFcs), outputGDB))
         
     for inFc in inFcs:
         
@@ -47,8 +47,8 @@ def main(args):
         fc.addToFeatureClass(outputGDB)
     
     elapsedTime = round((time.time()-start)/60, 4)
-    print "\nEND: {}\n".format(time.strftime("%m-%d-%y %I:%M:%S"))
-    print "Completed in {} minutes".format(elapsedTime)
+    print("\nEND: {}\n".format(time.strftime("%m-%d-%y %I:%M:%S")))
+    print("Completed in {} minutes".format(elapsedTime))
     
 if __name__ == "__main__":
     

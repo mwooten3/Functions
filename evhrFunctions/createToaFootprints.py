@@ -8,6 +8,8 @@ This may eventually go in EVHR
 
 For now it's in Functions (and EVHR_API/otherCode) on ADAPT
 
+Updates:
+    # 2/28/2022: Adding stripID field (diff from NCCS strip_id)
 """
 
 import os, sys
@@ -19,6 +21,7 @@ from osgeo import ogr
 
 Input = sys.argv[1] # input text list or dir
 Output = sys.argv[2] # output shp path/name
+#import pdb; pdb.set_trace()
 
 # Validate inputs
 if os.path.isdir(Input):
@@ -36,7 +39,8 @@ if not Output.endswith('.shp'):
 
 
 pathFieldName = 'filePath'
-newFields = OrderedDict([('fileName', [ogr.OFTString, 100]), ('sensor', [ogr.OFTString, 4]), 
+newFields = OrderedDict([('fileName', [ogr.OFTString, 100]), 
+              ('stripID', [ogr.OFTString, 40]), ('sensor', [ogr.OFTString, 4]), 
              ('specType', [ogr.OFTString, 4]), ('catalogID', [ogr.OFTString, 35]),
              ('date', [ogr.OFTString, 8]), ('year', [ogr.OFTInteger, None]), 
              ('month', [ogr.OFTString, 2]), ('day', [ogr.OFTString, 2])])
@@ -49,6 +53,7 @@ print(" {}".format(cmd))
 os.system(cmd)
 
 # Now edit the shapefile 
+print("\nAdding new fields to shapefile...")
 
 # Not using FeatureClass class here (two reasons: weird stuff about layer/adding fields this way, and might eventually add to EVHR)
 # Open output file:
@@ -75,6 +80,7 @@ for feature in layer:
     imgDate = bname.split('_')[1]
 
     feature.SetField('fileName', '{}-toa.tif'.format(bname))
+    feature.SetField('stripID', bname)
     feature.SetField('sensor', bname[0:4]) 
     feature.SetField('specType', bname.split('_')[2])
     feature.SetField('catalogID', bname.split('_')[3])

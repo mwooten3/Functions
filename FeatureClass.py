@@ -49,7 +49,7 @@ class FeatureClass(object):
         else:
             raise RuntimeError("Could not find driver from {}".format(self.extension))
             
-        
+        #import pdb; pdb.set_trace()        
         self.dataset = self.driver.Open(self.filePath)
         self.layer = self.dataset.GetLayer()
         self.layerDefn = self.layer.GetLayerDefn()
